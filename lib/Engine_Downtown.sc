@@ -18,12 +18,12 @@
 // Inherit methods from CroneEngine
 Engine_Downtown : CroneEngine {
 	// Define a getter for the synth variable
-	var <synth1;
-	var <synth2;
-	var <synth3;
-	var <synth4;
-	var <synth5;
-	var <synth6;
+	var <synthBirds;
+	var <synthBells;
+	var <synthPulse;
+	var <synthSnare;
+	var <synthKick;
+	var <synthPower;
 
 	// Define a class method when an object is created
 	*new { arg context, doneCallback;
@@ -34,8 +34,9 @@ Engine_Downtown : CroneEngine {
 	// Defined as an empty method in CroneEngine
 	// https://github.com/monome/norns/blob/master/sc/core/CroneEngine.sc#L31
 	alloc {
+
 		// birds, adapted from https://twitter.com/aucotsi/status/408981450994638848
-		synth1 = {
+		synthBirds = {
 			arg amp=0.0, amplag=0.02;
 			var amp_, snd;
 			amp_ = Lag.ar(K2A.ar(amp), amplag);
@@ -45,19 +46,19 @@ Engine_Downtown : CroneEngine {
 		}.play(target: context.xg);
 
 		// bells, adapted from https://twitter.com/joshpar/status/100417407021092864
-		synth2 = {
+		synthBells = {
 			arg amp=0.0, amplag=0.02;
 			var amp_, snd;
 			amp_ = Lag.ar(K2A.ar(amp), amplag);
 			snd=SinOsc.ar(LFNoise0.ar(10).range(100,1e4),0,0.05)*Decay.kr(Dust.kr(1));
-			snd=GVerb.ar(snd*LFNoise1.ar(32.703),299,10,0.2,0.5,50,0,0.2,0.9,mul:amp_);
-			snd = HPF.ar(snd,20);
+			snd=GVerb.ar(snd*LFNoise1.ar(32.703),299,10,0.2,0.5,50,0,0.2,0.9);
+			snd = HPF.ar(snd,20,mul:amp_);
 
 			snd
 		}.play(target: context.xg);
 
-		// bass, adapted from https://sccode.org/1-55m
-		synth3 = {
+		// pulse, adapted from https://sccode.org/1-55m
+		synthPulse = {
 			arg amp=0.0, amplag=0.02, bpm=120, midinote=24;
 			var amp_, hz_, snd, pulse, bass, lfo;	
 			amp_ = Lag.ar(K2A.ar(amp), amplag);
@@ -74,7 +75,7 @@ Engine_Downtown : CroneEngine {
 		}.play(target: context.xg);
 
 		// drumbeat, adapted from https://twitter.com/aucotsi/status/400603496140906496
-		synth4 = {
+		synthSnare = {
 			arg amp=0.0, amplag=0.02, bpm=120, hz=1300;
 			var amp_, hz_, snd;
 			amp_ = Lag.ar(K2A.ar(amp), amplag);
@@ -89,7 +90,7 @@ Engine_Downtown : CroneEngine {
 		}.play(target: context.xg);
 
 		// kick, adapted from https://twitter.com/aucotsi/status/400603496140906496
-		synth5 = {
+		synthKick = {
 			arg amp=0.0, amplag=0.02, bpm=120, hz=1300;
 			var amp_, hz_, snd;
 			amp_ = Lag.ar(K2A.ar(amp), amplag);
@@ -100,72 +101,113 @@ Engine_Downtown : CroneEngine {
 			[snd,snd]
 		}.play(target: context.xg);
 
-		// bongo, adapted from https://twitter.com/awhillas/status/22165574690
-		synth6 = {
-			arg amp=0.0, amplag=0.02, bpm=120, hz=1300;
-			var amp_, hz_, snd;
+		// // bongo, adapted from https://twitter.com/awhillas/status/22165574690
+		// synth6 = {
+		// 	arg amp=0.0, amplag=0.02, bpm=120, hz=1300;
+		// 	var amp_, hz_, snd;
+		// 	amp_ = Lag.ar(K2A.ar(amp), amplag);
+
+		//     snd = Pan2.ar(
+		// 	Mix.new(
+		// 		Limiter.ar(
+		// 		SinOsc.ar(
+		// 			[50,80,120,40],
+	 //                 0,
+		// 			EnvGen.kr(
+		// 				Env.perc(0.01,0.3),
+		// 				Impulse.kr([2,2,3,1.5]*bpm/60/2)
+		// 			)
+		// 		))
+		//     ),level:amp_);
+	 //        snd = HPF.ar(snd,10);
+
+		// 	[snd,snd]
+		// }.play(target: context.xg);
+
+
+		// powerlines adapted from sccode https://sccode.org/1-4VU
+		synthPower = {
+			arg amp=0.0, amplag=0.02;
+			var amp_, snd;
 			amp_ = Lag.ar(K2A.ar(amp), amplag);
 
-		    snd = Pan2.ar(
-			Mix.new(
-				Limiter.ar(
-				SinOsc.ar(
-					[50,80,120,40],
-	                 0,
-					EnvGen.kr(
-						Env.perc(0.01,0.3),
-						Impulse.kr([2,2,3,1.5]*bpm/60/2)
-					)
-				))
-		    ),level:amp_);
-	        snd = HPF.ar(snd,10);
+		    snd = Saw.ar(50)*(LFNoise0.kr(50)>0)*SinOsc.kr(0.1, 0, 0.4, 0.45);
+			snd = FreeVerb.ar(snd, SinOsc.kr(0.01, 0, 0.4, 0.5),0.9,0.6,mul:amp_);
 
 			[snd,snd]
 		}.play(target: context.xg);
 
+		// // storm adapted from https://sccode.org/1-e
+		// synthStorm = {
+		// 	arg amp=0.0, amplag=0.02;
+		// 	var amp_, snd;
+		// 	amp_ = Lag.ar(K2A.ar(amp), amplag);
+		// 	snd = Limiter.ar(
+		// 			Mix.new([
+		// 	        tanh(
+		// 	            3 * GVerb.ar(
+		// 	                HPF.ar(
+		// 	                    PinkNoise.ar(0.08+LFNoise1.kr(0.3,0.02))+LPF.ar(Dust2.ar(LFNoise1.kr(0.2).range(40,50)),7000),
+		// 	                    400
+		// 	                ),
+		// 	                250,100,0.25,drylevel:0.3
+		// 	            ) * Line.kr(0,1,10)
+		// 	        ), GVerb.ar(
+		// 	                LPF.ar(
+		// 	                    10 * HPF.ar(PinkNoise.ar(LFNoise1.kr(3).clip(0,1)*LFNoise1.kr(2).clip(0,1) ** 1.8), 20)
+		// 	                    ,LFNoise1.kr(1).exprange(100,2500)
+		// 	                ).tanh,
+		// 	               270,30,0.7,drylevel:0.5
+		// 			) * 2 * SinOsc.kr(0.1,mul:3).tanh.abs * Line.kr(0,2,30)
+		// 			])
+		// 	    ,level:0.5) * amp_;
+		// 	snd = HPF.ar(snd,5);
+		// 	snd
+		// }.play(target: context.xg);
+
 
 		this.addCommand("bpm", "f", { arg msg;
-			synth3.set(\bpm, msg[1]);
-			synth4.set(\bpm, msg[1]);
-			synth5.set(\bpm, msg[1]);
-			synth6.set(\bpm, msg[1]);
+			synthPulse.set(\bpm, msg[1]);
+			synthKick.set(\bpm, msg[1]);
+			synthSnare.set(\bpm, msg[1]);
 		});
 
-		this.addCommand("amp1", "f", { arg msg;
-			synth1.set(\amp, msg[1]);
+		this.addCommand("birds", "f", { arg msg;
+			synthBirds.set(\amp, msg[1]);
 		});
 
-		this.addCommand("amp2", "f", { arg msg;
-			synth2.set(\amp, msg[1]);
+		this.addCommand("bells", "f", { arg msg;
+			synthBells.set(\amp, msg[1]);
 		});
 
-		this.addCommand("amp3", "f", { arg msg;
-			synth3.set(\amp, msg[1]);
+		this.addCommand("pulse", "f", { arg msg;
+			synthPulse.set(\amp, msg[1]);
 		});
 
-		this.addCommand("midinote", "f", { arg msg;
-			synth3.set(\midinote, msg[1]);
+		this.addCommand("pulsenote", "f", { arg msg;
+			synthPulse.set(\midinote, msg[1]);
 		});
 
-		this.addCommand("amp4", "f", { arg msg;
-			synth4.set(\amp, msg[1]);
+		this.addCommand("kick", "f", { arg msg;
+			synthKick.set(\amp, msg[1]);
 		});
 
-		this.addCommand("amp5", "f", { arg msg;
-			synth5.set(\amp, msg[1]);
+		this.addCommand("snare", "f", { arg msg;
+			synthSnare.set(\amp, msg[1]);
 		});
 
-		this.addCommand("amp6", "f", { arg msg;
-			synth6.set(\amp, msg[1]);
+		this.addCommand("power", "f", { arg msg;
+			synthPower.set(\amp, msg[1]);
 		});
+
 	}
 	// define a function that is called when the synth is shut down
 	free {
-		synth1.free;
-		synth2.free;
-		synth3.free;
-		synth4.free;
-		synth5.free;
-		synth6.free;
+		synthBirds.free;
+		synthBells.free;
+		synthPulse.free;
+		synthSnare.free;
+		synthKick.free;
+		synthPower.free;
 	}
 }

@@ -25,13 +25,13 @@ loop_max_beats = 16
 -- if you change the engine you should change these
 modulators = {  
   -- these are engine related (see the engine)
-  {name="birds",engine="amp1",max=0.5},
-  {name="bells",engine="amp2",max=0.5},
-  {name="pulse",engine="amp3",max=0.5},
-  {name="pulse note",engine="midinote",min=12,max=60,interval=1,default=29},
-  {name="snare",engine="amp4",max=0.5},
-  {name="kick",engine="amp5",max=0.5},
-  {name="bongo",engine="amp6",max=0.5},
+  {name="powerline",engine="power",max=0.5},
+  {name="birds",engine="birds",max=1.0},
+  {name="bells",engine="bells",max=1.0},
+  {name="pulse",engine="pulse",max=0.5},
+  {name="pulse note",engine="pulsenote",min=12,max=60,interval=1,default=29},
+  {name="snare",engine="snare",max=0.5},
+  {name="kick",engine="kick",max=0.5},
   -- add another engine here!
 --------- STOP CHANGING CODE unless you want to :) ---------
 
@@ -49,6 +49,7 @@ modulator_ordering = {}
 ui_choice_sample = 0
 ui_choice_mod = 0
 city_widths = {}
+star_positions = {}
 defaults_set=false
 
 -- WAVEFORMS
@@ -63,11 +64,16 @@ function init()
   norns.enc.sens(2,4) 
   norns.enc.sens(3,4) 
 
+  -- setup drawing stuff
   modulator_ordering = {}
   for i, _ in ipairs(modulators) do 
     local pos = math.random(1,#modulator_ordering+1)
     table.insert(modulator_ordering,pos,i)
     city_widths[i] = util.clamp(gaussian(1,0.15),0.3,1)
+  end
+  star_positions = {}
+  for i=1,math.random(15,30) do
+    star_positions[i] = {math.random(1,128),math.random(1,19),math.random(1,15),math.random(1,10)/10}
   end
 
   -- setup the running clock
@@ -347,6 +353,8 @@ function redraw()
   screen.clear()
 
   -- draw engine skyline
+  draw_stars()
+  draw_moon()
   draw_godzilla()
   for order,i in ipairs(modulator_ordering) do
     draw_building(i,order)
@@ -430,6 +438,29 @@ function redraw()
   end
 
   screen.update()
+end
+
+function draw_stars()
+  for i,p in ipairs(star_positions) do 
+    star_positions[i][3] = star_positions[i][3] + star_positions[i][4]
+    if star_positions[i][3] > 15 then 
+      star_positions[i][3] = 1 
+    end
+    screen.level(math.floor(star_positions[i][3]))
+    screen.pixel(p[1],p[2])
+    screen.fill()
+  end
+end
+
+function draw_moon()
+  local pixels={
+{14,0},{15,0},{16,0},{13,1},{14,1},{15,1},{12,2},{13,2},{14,2},{12,3},{13,3},{14,3},{12,4},{13,4},{14,4},{12,5},{13,5},{14,5},{15,5},{12,6},{13,6},{14,6},{15,6},{16,6},{17,6},{18,6},{13,7},{14,7},{15,7},{16,7},{17,7},
+  }
+  screen.level(8)
+  for i, p in ipairs(pixels) do
+    screen.pixel(p[1],p[2])
+  end
+  screen.fill()
 end
 
 function draw_godzilla()
