@@ -1,6 +1,6 @@
 ## downtown
 
-an urban landscape of sound.
+become an architect of sound.
 
 ![Image](https://user-images.githubusercontent.com/6550035/103465225-7859a380-4cee-11eb-981d-bc571d9b152d.png)
 
@@ -8,7 +8,7 @@ https://vimeo.com/496475138
 
 view downtown over the skyline. build skyscrapers or tear them down to change the sounds coming from the city. record and mix in your sounds into the city and even build your own towers.
 
-all cities are alike and all cities are different. like cities, this script welcomes change. the towers are built from supercollider tweets - you can [easily find more](https://twitter.com/search?q=SinOsc%20(%23supercollider%20OR%20%23sc%20OR%20%23sctweet)&src=typed_query&f=live). find one you like and [add it as a new tower in the city](https://github.com/schollz/infinitedigits/tree/master/1#new-towers). i welcome prs if you'd like to share your tower with this script.
+all cities are alike and all cities are different. like cities, this script welcomes change. the towers are built from supercollider tweets - you can [easily find more](https://twitter.com/search?q=SinOsc%20(%23supercollider%20OR%20%23sc%20OR%20%23sctweet)&src=typed_query&f=live) and then [add it as a new tower in the city](https://github.com/schollz/infinitedigits/tree/master/1#new-towers).
 
 ### Requirements
 
@@ -21,7 +21,7 @@ all cities are alike and all cities are different. like cities, this script welc
 - E2 changes modulator
 - E3 modulates
 
-this script is meant as "playground" to add little supercollider things and interact with them through softcut loops. the three softcut loops record in stereo and their length is dependent on the norns internal tempo. they are set to 16 beats, but this can be changed within the script (restart to apply changes).
+this script is meant as "playground" to add little supercollider things and interact with them through softcut loops. the three softcut loops record in stereo and their length is dependent on the norns internal tempo. they are set to 16 beats, but this can be changed [within the script](https://github.com/schollz/downtown/blob/228e087d3c298c2fef9077438173ce77687db969/downtown.lua#L22) (restart to apply changes).
 
 the supercollider things are represented as towers, accessible through E2 and E3 (although you could certainly tie them to grid / controllers). the towers are modulations for supercollider scripts running in the norns engine.
 
@@ -29,7 +29,7 @@ the supercollider things are represented as towers, accessible through E2 and E3
 
 the engine has a bunch of different free-running supercollider scripts. its easy to add your own. if you want to add one, you can follow these five steps to make your own.
 
-1. in `Engine_Downtown.sc`, add a `  var <synthX;` at the top after `Engine_Downtown : CroneEngine {`, where `X` is whatever you want.
+1. in `Engine_Downtown.sc`, add a `  var <synthX;` [at the top](https://github.com/schollz/downtown/blob/228e087d3c298c2fef9077438173ce77687db969/lib/Engine_Downtown.sc#L20) after `Engine_Downtown : CroneEngine {`, where `X` is whatever you want.
 2. in `Engine_Downtown.sc`, define the `synthX`, using something similar to this:
 
 ```
@@ -57,7 +57,7 @@ this.addCommand("hzX", "f", { arg msg;
 ```
 
 4. in `Engine_Downtown.sc`, add `synthX.free;` at the bottom of the code.
-5. in `downtown.lua` add a new modulator that references the command definitions:
+5. in `downtown.lua` [add a new modulator](https://github.com/schollz/downtown/blob/228e087d3c298c2fef9077438173ce77687db969/downtown.lua#L27) that references the command definitions:
 
 ```lua
 modulators = {  
