@@ -1,4 +1,4 @@
--- downtown v0.0.1
+-- downtown v0.1.0
 -- the cityscape is full of sound.
 --
 -- llllllll.co/t/downtown
@@ -25,6 +25,7 @@ loop_max_beats = 16
 -- if you change the engine you should change these
 modulators = {  
   -- these are engine related (see the engine)
+  {name="storm",engine="storm",max=0.6},
   {name="powerline",engine="power",max=0.5},
   {name="birds",engine="birds",max=1.0},
   {name="bells",engine="bells",max=1.0},
@@ -428,7 +429,7 @@ function redraw()
       x = math.floor((ui_choice_mod)/(#modulators)*128)-2
       screen.move(x,y)
       screen.text_right(modulators[ui_choice_mod].name)
-    elseif ui_choice_mod == 1 then 
+    elseif ui_choice_mod <= 2 then 
       screen.move(x,y)
       screen.text(modulators[ui_choice_mod].name)
     else

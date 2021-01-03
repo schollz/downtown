@@ -24,6 +24,7 @@ Engine_Downtown : CroneEngine {
 	var <synthSnare;
 	var <synthKick;
 	var <synthPower;
+	var <synthStorm;
 
 	// Define a class method when an object is created
 	*new { arg context, doneCallback;
@@ -40,8 +41,7 @@ Engine_Downtown : CroneEngine {
 			arg amp=0.0, amplag=0.02;
 			var amp_, snd;
 			amp_ = Lag.ar(K2A.ar(amp), amplag);
-			snd = Limiter.ar(GVerb.ar(Formlet.ar(LFCub.ar(Convolution.ar(LinCongN.ar(5),LinCongN.ar(5))),LFCub.ar(Sweep.ar(LFCub.ar(1/9),3)).range(1999,3999),0.01,0.1),mul:10),0.02*amp_);
-
+			snd = Limiter.ar(GVerb.ar(Formlet.ar(LFCub.ar(Convolution.ar(LinCongN.ar(9),LinCongN.ar(3))),LFCub.kr(Sweep.kr(LFCub.kr(TChoose.kr(SinOsc.kr(1),[1/9,1/2,1,1/11,1/5])),4)).range(1500,3999),0.01,0.1),mul:10),SinOsc.kr(SinOsc.kr(rrand(0.2,1),mul:0.1,add:0.1),mul:0.02,add:0.021)*amp_);
 			snd
 		}.play(target: context.xg);
 
@@ -137,33 +137,32 @@ Engine_Downtown : CroneEngine {
 			[snd,snd]
 		}.play(target: context.xg);
 
-		// // storm adapted from https://sccode.org/1-e
-		// synthStorm = {
-		// 	arg amp=0.0, amplag=0.02;
-		// 	var amp_, snd;
-		// 	amp_ = Lag.ar(K2A.ar(amp), amplag);
-		// 	snd = Limiter.ar(
-		// 			Mix.new([
-		// 	        tanh(
-		// 	            3 * GVerb.ar(
-		// 	                HPF.ar(
-		// 	                    PinkNoise.ar(0.08+LFNoise1.kr(0.3,0.02))+LPF.ar(Dust2.ar(LFNoise1.kr(0.2).range(40,50)),7000),
-		// 	                    400
-		// 	                ),
-		// 	                250,100,0.25,drylevel:0.3
-		// 	            ) * Line.kr(0,1,10)
-		// 	        ), GVerb.ar(
-		// 	                LPF.ar(
-		// 	                    10 * HPF.ar(PinkNoise.ar(LFNoise1.kr(3).clip(0,1)*LFNoise1.kr(2).clip(0,1) ** 1.8), 20)
-		// 	                    ,LFNoise1.kr(1).exprange(100,2500)
-		// 	                ).tanh,
-		// 	               270,30,0.7,drylevel:0.5
-		// 			) * 2 * SinOsc.kr(0.1,mul:3).tanh.abs * Line.kr(0,2,30)
-		// 			])
-		// 	    ,level:0.5) * amp_;
-		// 	snd = HPF.ar(snd,5);
-		// 	snd
-		// }.play(target: context.xg);
+		// storm adapted from https://sccode.org/1-e
+		synthStorm = {
+			arg amp=0.0, amplag=0.02;
+			var amp_, snd;
+			amp_ = Lag.ar(K2A.ar(amp), amplag);
+		 	snd = Limiter.ar(
+		 			Mix.new([
+		 	        tanh(
+		 	            GVerb.ar(
+		 	                HPF.ar(
+		 	                    PinkNoise.ar(0.08+LFNoise1.kr(0.3,0.02))+LPF.ar(Dust2.ar(LFNoise1.kr(0.2).range(40,50)),7000),
+		 	                    400
+		 	                ),
+		 	                250,100,0.25,drylevel:0.3
+		 	            ) * 0.6 * Line.kr(0,0.6,10)
+		 	        ), GVerb.ar(
+		 	                LPF.ar(
+		 	                    10 * HPF.ar(PinkNoise.ar(LFNoise1.kr(3).clip(0,1)*LFNoise1.kr(2).clip(0,1) ** 1.8), 20)
+		 	                    ,LFNoise1.kr(1).exprange(100,2500)
+		 	                ).tanh,
+		 	               270,30,0.7,drylevel:0.5
+		 			) * 1.0 * SinOsc.kr(0.1,mul:3).tanh.abs * Line.kr(0,1.0,30)
+		 			])
+		 	    ,level:0.5) * amp_;
+			snd
+		}.play(target: context.xg);
 
 
 		this.addCommand("bpm", "f", { arg msg;
@@ -200,6 +199,14 @@ Engine_Downtown : CroneEngine {
 			synthPower.set(\amp, msg[1]);
 		});
 
+		this.addCommand("power", "f", { arg msg;
+			synthPower.set(\amp, msg[1]);
+		});		
+
+		this.addCommand("storm", "f", { arg msg;
+			synthStorm.set(\amp, msg[1]);
+		});
+
 	}
 	// define a function that is called when the synth is shut down
 	free {
@@ -209,5 +216,6 @@ Engine_Downtown : CroneEngine {
 		synthSnare.free;
 		synthKick.free;
 		synthPower.free;
+		synthStorm.free;
 	}
 }
