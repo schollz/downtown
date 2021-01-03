@@ -66,7 +66,7 @@ modulators = {
   ...
 ```
 
-6. that's it! there will now be a new tower in the city with your sound.
+6. that's it! there will now be a new tower in the city with each parameter for your sound.
 
 ## license 
 
