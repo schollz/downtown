@@ -25,6 +25,8 @@ loop_max_beats = 16
 -- if you change the engine you should change these
 modulators = {  
   -- these are engine related (see the engine)
+  {name="sampleBirds",engine="sampleBirds",max=0.6},
+  {name="sampleBLM",engine="sampleBLM",max=0.6},
   {name="storm",engine="storm",max=0.6},
   {name="powerline",engine="power",max=0.5},
   {name="birds",engine="birds",max=1.0},
@@ -79,7 +81,7 @@ function init()
 
   -- setup the running clock
   updater = metro.init()
-  updater.time = 0.1
+  updater.time = 0.2
   updater.count = -1
   updater.event = update_screen
   updater:start()

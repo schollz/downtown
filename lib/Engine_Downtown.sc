@@ -25,6 +25,10 @@ Engine_Downtown : CroneEngine {
 	var <synthKick;
 	var <synthPower;
 	var <synthStorm;
+	var <sampleBirds;
+	var sampleBirdsBuffer;
+	var <sampleBLM;
+	var sampleBLMBuffer;
 
 	// Define a class method when an object is created
 	*new { arg context, doneCallback;
@@ -35,6 +39,18 @@ Engine_Downtown : CroneEngine {
 	// Defined as an empty method in CroneEngine
 	// https://github.com/monome/norns/blob/master/sc/core/CroneEngine.sc#L31
 	alloc {
+		sampleBirdsBuffer = Buffer.read(context.server,"/home/we/dust/audio/downtown/birds_morning.wav");
+		sampleBirds = {
+			arg amp=0.0, amplag=0.02;
+			PlayBuf.ar(2,sampleBirdsBuffer,BufRateScale.kr(sampleBirdsBuffer),loop:1)*Lag.ar(K2A.ar(amp), amplag)
+		}.play(target: context.xg);
+
+
+		sampleBLMBuffer = Buffer.read(context.server,"/home/we/dust/audio/downtown/blm.wav");
+		sampleBLM = {
+			arg amp=0.0, amplag=0.02;
+			PlayBuf.ar(2,sampleBLMBuffer,BufRateScale.kr(sampleBLMBuffer),loop:1)*Lag.ar(K2A.ar(amp), amplag)
+		}.play(target: context.xg);
 
 		// birds, adapted from https://twitter.com/aucotsi/status/408981450994638848
 		synthBirds = {
@@ -207,6 +223,13 @@ Engine_Downtown : CroneEngine {
 			synthStorm.set(\amp, msg[1]);
 		});
 
+		this.addCommand("sampleBirds","f", { arg msg;
+			sampleBirds.set(\amp, msg[1]);
+		});
+		this.addCommand("sampleBLM","f", { arg msg;
+			sampleBLM.set(\amp, msg[1]);
+		});
+
 	}
 	// define a function that is called when the synth is shut down
 	free {
@@ -217,5 +240,9 @@ Engine_Downtown : CroneEngine {
 		synthKick.free;
 		synthPower.free;
 		synthStorm.free;
+		sampleBirds.free;
+		sampleBirdsBuffer.free;
+		sampleBLM.free;
+		sampleBLMBuffer.free;
 	}
 }
