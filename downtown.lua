@@ -18,7 +18,7 @@ include("lib/pixels") -- global functions
 
 engine.name="Downtown"
 
-loop_max_beats=16
+loop_max_beats=32
 
 -- these show up as "towers" which you can scale
 -- if you change the engine you should change these
@@ -135,10 +135,10 @@ function init()
 end
 
 function setup_parameters()
-  
+  -- add supercollider
   for i,m in ipairs(modulators) do
     params:add_group(m.name,2)
-    params:add{type="control",id="engine"..m.name,name=m.name,controlspec=controlspec.new(m.min,m.max,"lin",m.interval,m.default,""),
+    params:add{type="control",id="engine_sc"..i,name=m.name,controlspec=controlspec.new(m.min,m.max,"lin",m.interval,m.default,""),
       action=function(value)
         local enginecmd="engine."..m.name.."("..value..")"
         local f=load(enginecmd)
@@ -146,11 +146,36 @@ function setup_parameters()
         debounce_params_save=3
       end
     }
-    params:add{type="option",id="natural"..m.name,name=m.name,options={"no","yes"},default=1,
+    params:add{type="option",id="natural_sc"..i,name="natural",options={"no","yes"},default=1,
       action=function(value)
         debounce_params_save=3
       end
     }
+    params:add{type="option",id="loves_sc"..i,name="loves",options={"no","yes"},default=1,
+      action=function(value)
+        debounce_params_save=3
+      end
+    }
+    params:add{type="option",id="fears_sc"..i,name="fears",options={"no","yes"},default=2,
+      action=function(value)
+        debounce_params_save=3
+      end
+    }
+    -- parameters for drawing
+    params:add_number("sprite_zorder_sc"..i,0,100,math.random(1,15))
+    params:hide("sprite_zorder_sc"..i)
+    params:add_number("sprite_width_sc"..i,0,100,util.clamp(gaussian(12,6),3,30))
+    params:hide("sprite_width_sc"..i)
+    params:add_number("sprite_density_sc"..i,0,100,math.random(20,90)/100.0)
+    params:hide("sprite_density_sc"..i)
+    params:add_number("sprite_xspacing_sc"..i,0,100,math.random(2,4))
+    params:hide("sprite_xspacing_sc"..i)
+    params:add_number("sprite_xspacing2_sc"..i,0,100,math.random(1,2))
+    params:hide("sprite_xspacing2_sc"..i)
+    params:add_number("sprite_yspacing_sc"..i,0,100,math.random(2,4))
+    params:hide("sprite_yspacing_sc"..i)
+    params:add_number("sprite_num_sc"..i,0,100,math.random(1,15))
+    params:hide("sprite_num_sc"..i)
   end
   
   -- add params
@@ -171,7 +196,7 @@ function setup_parameters()
         debounce_params_save=3
       end
     }
-    params:add {type='control',id=i..'end',name='end',controlspec=controlspec.new(1,loop_max_beats,'lin',1,loop_max_beats,'beats'),
+    params:add {type='control',id=i..'end',name='end',controlspec=controlspec.new(1,loop_max_beats,'lin',1,16,'beats'),
       action=function(value)
         local loop_length=clock.get_beat_sec()*value
         softcut.loop_end(i*2,softcut_loop_starts[i*2]+loop_length)
