@@ -45,6 +45,7 @@ city_widths={}
 star_positions={}
 defaults_set=false
 debounce_params_save=0
+debounce_set_max_beats=0
 sprite_positions={}
 
 -- WAVEFORMS
@@ -68,14 +69,15 @@ function init()
   updater.event=update_screen
   updater:start()
   
-  -- initialize softcut
+  -- setup parametesr
+  setup_parameters()
+  
+  -- initialize softcut (after parameters)
   reset_softcut()
   softcut.event_phase(update_positions)
   softcut.event_render(on_render)
   softcut.poll_start_phase()
-  
-  -- setup parametesr
-  setup_parameters()
+
   -- TODO load default parameters
   params:bang()
   
@@ -117,6 +119,11 @@ function compare_second(a,b)
 end
 
 function setup_parameters()
+  params:add{type="control",id="maxbeats",name="max beats",controlspec=controlspec.new(1,128,"lin",1,16,"beats"),
+      action=function(value)
+        debounce_set_max_beats=4
+      end
+  }
 
   -- add supercollider params + sprites
   for i,m in ipairs(modulators) do
@@ -159,7 +166,7 @@ function setup_parameters()
     params:hide("sprite_yspacing_sc"..i)
     params:add_number("sprite_num_sc"..i,0,100,math.random(1,15))
     params:hide("sprite_num_sc"..i)
-    params:add_number("sprite_pos_sc"..i,0,100,math.floor(i*100/#modulators))
+    params:add_number("sprite_pos_sc"..i,0,128,math.floor(i*100/#modulators))
     params:hide("sprite_pos_sc"..i)
   end
   
@@ -198,7 +205,7 @@ function setup_parameters()
     params:hide("sprite_yspacing_fr"..i)
     params:add_number("sprite_num_fr"..i,0,100,math.random(1,15))
     params:hide("sprite_num_fr"..i)
-    params:add_number("sprite_pos_fr"..i,0,100,math.floor(i*100/8))
+    params:add_number("sprite_pos_fr"..i,0,128,math.floor(i*100/8))
     params:hide("sprite_pos_fr"..i)
   end
 
@@ -256,6 +263,33 @@ function setup_parameters()
         debounce_params_save=3
       end
     }
+    params:add{type="option",id="loves_lp"..i,name="loves gojira",options={"no","yes"},default=1,
+      action=function(value)
+        debounce_params_save=3
+      end
+    }
+    params:add{type="option",id="fears_lp"..i,name="fears gojira",options={"no","yes"},default=2,
+      action=function(value)
+        debounce_params_save=3
+      end
+    }
+    -- parameters for drawing
+    params:add_number("sprite_zorder_lp"..i,0,100,math.random(1,15))
+    params:hide("sprite_zorder_lp"..i)
+    params:add_number("sprite_width_lp"..i,0,100,util.clamp(gaussian(12,6),3,30))
+    params:hide("sprite_width_lp"..i)
+    params:add_number("sprite_density_lp"..i,0,100,math.random(20,90)/100.0)
+    params:hide("sprite_density_lp"..i)
+    params:add_number("sprite_xspacing_lp"..i,0,100,math.random(2,4))
+    params:hide("sprite_xspacing_lp"..i)
+    params:add_number("sprite_xspacing2_lp"..i,0,100,math.random(1,2))
+    params:hide("sprite_xspacing2_lp"..i)
+    params:add_number("sprite_yspacing_lp"..i,0,100,math.random(2,4))
+    params:hide("sprite_yspacing_lp"..i)
+    params:add_number("sprite_num_lp"..i,0,100,math.random(1,15))
+    params:hide("sprite_num_lp"..i)
+    params:add_number("sprite_pos_lp"..i,0,128,math.floor(100+i*6))
+    params:hide("sprite_pos_lp"..i)
   end
 end
 
@@ -268,6 +302,13 @@ function update_screen()
     debounce_params_save = debounce_params_save - 1
     if debounce_params_save == 0 then 
       -- TODO: save
+    end
+  end
+  if debounce_set_max_beats > 0 then 
+    debounce_set_max_beats = debounce_set_max_beats - 1
+    if debounce_set_max_beats == 0 then 
+      reset_softcut()
+      -- save parameters
     end
   end
   if clock.get_beats()-ui_enc3_on>2 and ui_show_flames then
@@ -286,12 +327,14 @@ end
 
 function reset_softcut()
   loop_start=1
-  loop_length=clock.get_beat_sec()*loop_max_beats
+  loop_length=clock.get_beat_sec()*params:get("maxbeats")
   softcut.reset()
+  softcut.buffer_clear()
   for i=1,6 do
+    j = math.ceil(i/2) -- which of the 3 stereo
     softcut.enable(i,1)
     
-    softcut.level(i,0.5)
+    softcut.level(i,params:get("loop"..j))
     if i%2==1 then
       softcut.pan(i,1)
       softcut.buffer(i,1)
@@ -324,7 +367,7 @@ function reset_softcut()
     softcut.post_filter_dry(i,0.0)
     softcut.post_filter_lp(i,1.0)
     softcut.post_filter_rq(i,1.0)
-    softcut.post_filter_fc(i,20100)
+    softcut.post_filter_fc(i,params:get(j..'filter_frequency'))
     
     softcut.pre_filter_dry(i,1.0)
     softcut.pre_filter_lp(i,1.0)
@@ -338,25 +381,25 @@ function reset_softcut()
 end
 
 function enc(k,d)
-  if k==2 then
-    ui_choice_mod=sign_cycle(ui_choice_mod,d,0,#modulators)
-  elseif k==3 and ui_choice_mod>0 then
-    m=modulators[ui_choice_mod]
-    if m.interval==1 then
-      d=sign(d)
-    end
-    params:set(m.para,util.clamp(params:get(m.para)+d*m.interval,m.min,m.max))
-  elseif k==1 then
-    ui_enc3_on=clock.get_beats()
-    for i,m in ipairs(modulators) do
-      if params:get(m.name)>0 then
-        if m.interval==1 then
-          d=sign(d)
-        end
-        params:set(m.para,util.clamp(params:get(m.para)+d*m.interval,m.min,m.max))
-      end
-    end
-  end
+  -- if k==2 then
+  --   ui_choice_mod=sign_cycle(ui_choice_mod,d,0,#modulators)
+  -- elseif k==3 and ui_choice_mod>0 then
+  --   m=modulators[ui_choice_mod]
+  --   if m.interval==1 then
+  --     d=sign(d)
+  --   end
+  --   params:set(m.para,util.clamp(params:get(m.para)+d*m.interval,m.min,m.max))
+  -- elseif k==1 then
+  --   ui_enc3_on=clock.get_beats()
+  --   for i,m in ipairs(modulators) do
+  --     if params:get(m.name)>0 then
+  --       if m.interval==1 then
+  --         d=sign(d)
+  --       end
+  --       params:set(m.para,util.clamp(params:get(m.para)+d*m.interval,m.min,m.max))
+  --     end
+  --   end
+  -- end
 end
 
 function key(k,z)
@@ -366,6 +409,120 @@ function key(k,z)
     params:set(ui_choice_sample.."rec",1-params:get(ui_choice_sample.."rec"))
   end
 end
+
+
+function redraw()
+  screen.clear()
+  
+  -- draw engine skyline
+  draw_stars()
+  -- draw_moon()
+  -- for order,i in ipairs(modulator_ordering) do
+  --   if modulators[i].nature==true then
+  --     draw_tree(i,order)
+  --   else
+  --     draw_building(i,order)
+  --   end
+  -- end
+  -- draw_godzilla()
+  
+  -- -- show samples
+  -- screen.level(15)
+  -- local positions={}
+  -- for i,p in ipairs(current_positions) do
+  --   local frac=math.ceil(i/2-1)/3
+  --   positions[i]=util.round(util.linlin(softcut_loop_starts[i],softcut_loop_ends[i],math.ceil(i/2-1)/3*128,math.ceil(i/2)/3*128,p))
+  -- end
+  -- if waveform_samples[1]~=nil and waveform_samples[2]~=nil then
+  --   for j=1,2 do
+  --     for i,s in ipairs(waveform_samples[j]) do
+  --       if i==1 or i==1+42 or i==1+42+42 or i>=127 then
+  --         goto continue
+  --       end
+  --       local highlight=false
+  --       if i==positions[1] or i==positions[2] or i==positions[3] or i==positions[4] or i==positions[5] or i==positions[6] then
+  --         highlight=true
+  --       end
+  --       for k=1,3 do
+  --         if params:get(k.."rec")==1 and i>42*(k-1) and i<=42*k then
+  --           highlight=not highlight
+  --           break
+  --         end
+  --       end
+  --       if highlight then
+  --         screen.level(15)
+  --       else
+  --         screen.level(1)
+  --       end
+  --       local height=util.clamp(0,waveform_height,util.round(math.abs(s)*waveform_height))
+  --       screen.move(i,58-waveform_height/2)
+  --       screen.line_rel(0,(j*2-3)*height)
+  --       screen.stroke()
+  --       ::continue::
+  --     end
+  --   end
+  -- end
+  
+  -- -- draw rect around current sample
+  -- if ui_choice_sample>0 then
+  --   if params:get(ui_choice_sample.."rec")==1 then
+  --     screen.level(15)
+  --   else
+  --     screen.level(1)
+  --   end
+  --   screen.rect(1+42*(ui_choice_sample-1),bar_position+bar_height+1,43,64-bar_position-bar_height-1)
+  --   screen.stroke()
+  -- end
+  
+  -- -- draw middle bar
+  -- screen.level(15)
+  -- screen.rect(0,bar_position-1,128,bar_height+2)
+  -- screen.fill()
+  -- screen.level(0)
+  
+  -- -- label which modulator is selected
+  -- if ui_choice_mod>0 then
+  --   x=math.floor((ui_choice_mod-1)/(#modulators)*128)+2
+  --   y=bar_position+bar_height
+  --   -- w = math.floor(128/#modulators)+2
+  --   -- if ui_choice_mod==#modulators then
+  --   --   w = w -3
+  --   -- end
+  --   -- w = city_widths[ui_choice_mod]*w
+  --   w=city_widths[ui_choice_mod]
+  --   screen.level(0)
+  --   if ui_choice_mod>=#modulators-1 then
+  --     x=math.floor((ui_choice_mod)/(#modulators)*128)-2
+  --     screen.move(x,y)
+  --     screen.text_right(modulators[ui_choice_mod].name)
+  --   elseif ui_choice_mod<=2 then
+  --     screen.move(x,y)
+  --     screen.text(modulators[ui_choice_mod].name)
+  --   else
+  --     screen.move(x+w/3,y)
+  --     screen.text_center(modulators[ui_choice_mod].name)
+  --   end
+  -- end
+  -- draw_boom()
+  screen.update()
+end
+
+--
+-- drawings
+--
+
+function draw_stars()
+  for i,p in ipairs(star_positions) do
+    star_positions[i][3]=star_positions[i][3]+star_positions[i][4]
+    if star_positions[i][3]>15 then
+      star_positions[i][3]=1
+    end
+    screen.level(math.floor(star_positions[i][3]))
+    screen.pixel(p[1],p[2])
+    screen.fill()
+  end
+end
+
 
 function draw_tree(i,order)
   m=modulators[i]
@@ -462,115 +619,6 @@ function draw_building(i,order)
       end
       xpos=xpos+xspacing
     end
-  end
-  
-end
-
-function redraw()
-  screen.clear()
-  
-  -- draw engine skyline
-  draw_stars()
-  draw_moon()
-  for order,i in ipairs(modulator_ordering) do
-    if modulators[i].nature==true then
-      draw_tree(i,order)
-    else
-      draw_building(i,order)
-    end
-  end
-  draw_godzilla()
-  
-  -- show samples
-  screen.level(15)
-  local positions={}
-  for i,p in ipairs(current_positions) do
-    local frac=math.ceil(i/2-1)/3
-    positions[i]=util.round(util.linlin(softcut_loop_starts[i],softcut_loop_ends[i],math.ceil(i/2-1)/3*128,math.ceil(i/2)/3*128,p))
-  end
-  if waveform_samples[1]~=nil and waveform_samples[2]~=nil then
-    for j=1,2 do
-      for i,s in ipairs(waveform_samples[j]) do
-        if i==1 or i==1+42 or i==1+42+42 or i>=127 then
-          goto continue
-        end
-        local highlight=false
-        if i==positions[1] or i==positions[2] or i==positions[3] or i==positions[4] or i==positions[5] or i==positions[6] then
-          highlight=true
-        end
-        for k=1,3 do
-          if params:get(k.."rec")==1 and i>42*(k-1) and i<=42*k then
-            highlight=not highlight
-            break
-          end
-        end
-        if highlight then
-          screen.level(15)
-        else
-          screen.level(1)
-        end
-        local height=util.clamp(0,waveform_height,util.round(math.abs(s)*waveform_height))
-        screen.move(i,58-waveform_height/2)
-        screen.line_rel(0,(j*2-3)*height)
-        screen.stroke()
-        ::continue::
-      end
-    end
-  end
-  
-  -- draw rect around current sample
-  if ui_choice_sample>0 then
-    if params:get(ui_choice_sample.."rec")==1 then
-      screen.level(15)
-    else
-      screen.level(1)
-    end
-    screen.rect(1+42*(ui_choice_sample-1),bar_position+bar_height+1,43,64-bar_position-bar_height-1)
-    screen.stroke()
-  end
-  
-  -- draw middle bar
-  screen.level(15)
-  screen.rect(0,bar_position-1,128,bar_height+2)
-  screen.fill()
-  screen.level(0)
-  
-  -- label which modulator is selected
-  if ui_choice_mod>0 then
-    x=math.floor((ui_choice_mod-1)/(#modulators)*128)+2
-    y=bar_position+bar_height
-    -- w = math.floor(128/#modulators)+2
-    -- if ui_choice_mod==#modulators then
-    --   w = w -3
-    -- end
-    -- w = city_widths[ui_choice_mod]*w
-    w=city_widths[ui_choice_mod]
-    screen.level(0)
-    if ui_choice_mod>=#modulators-1 then
-      x=math.floor((ui_choice_mod)/(#modulators)*128)-2
-      screen.move(x,y)
-      screen.text_right(modulators[ui_choice_mod].name)
-    elseif ui_choice_mod<=2 then
-      screen.move(x,y)
-      screen.text(modulators[ui_choice_mod].name)
-    else
-      screen.move(x+w/3,y)
-      screen.text_center(modulators[ui_choice_mod].name)
-    end
-  end
-  draw_boom()
-  screen.update()
-end
-
-function draw_stars()
-  for i,p in ipairs(star_positions) do
-    star_positions[i][3]=star_positions[i][3]+star_positions[i][4]
-    if star_positions[i][3]>15 then
-      star_positions[i][3]=1
-    end
-    screen.level(math.floor(star_positions[i][3]))
-    screen.pixel(p[1],p[2])
-    screen.fill()
   end
 end
 
