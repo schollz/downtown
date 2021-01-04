@@ -19,35 +19,21 @@ include("lib/pixels") -- global functions
 
 engine.name = "Downtown"
 
----------           START CHANGING CODE           ---------
--- this modulates the length of softcut loops
+
 loop_max_beats = 16 
 
 -- these show up as "towers" which you can scale
 -- if you change the engine you should change these
 modulators = {  
   -- these are engine related (see the engine)
-  {name="birds",engine="sampleBirds",max=1.0,nature=true},
-  {name="tiny wings",engine="sampleTinyWings",max=1.0,nature=true},
-  {name="sax",engine="sampleSax",max=0.6},
-  {name="water",engine="sampleWaves",max=0.3,nature=true},
-  {name="footsteps",engine="sampleFootsteps",max=0.6,nature=true},
   {name="storm",engine="storm",max=0.6},
   {name="powerline",engine="power",max=0.5},
-  {name="protest",engine="sampleBLM",max=0.5},
-  {name="more birds",engine="birds",max=1.0,nature=true},
+  {name="birds",engine="birds",max=1.0},
   {name="bells",engine="bells",max=1.0},
   {name="pulse",engine="pulse",max=0.5},
   {name="pulse note",engine="pulsenote",min=12,max=60,interval=1,default=29},
   {name="snare",engine="snare",max=0.5},
   {name="kick",engine="kick",max=0.5},
-  -- add another engine here!
---------- STOP CHANGING CODE unless you want to :) ---------
-
-  -- put loops in the city
-  {name="loop1",max=0.5,default=0.5},
-  {name="loop2",max=0.5,default=0.3},
-  {name="loop3",max=0.5,default=0.2},
 }
 
 -- state
@@ -75,17 +61,6 @@ function init()
   norns.enc.sens(2,4) 
   norns.enc.sens(3,4) 
 
-  -- setup drawing stuff
-  modulator_ordering = {}
-  for i, _ in ipairs(modulators) do 
-    local pos = math.random(1,#modulator_ordering+1)
-    table.insert(modulator_ordering,pos,i)
-    city_widths[i] = util.clamp(gaussian(12,6),3,30)
-  end
-  star_positions = {}
-  for i=1,math.random(15,30) do
-    star_positions[i] = {math.random(1,110),math.random(1,19),math.random(1,15),math.random(1,10)/10}
-  end
 
   -- setup the running clock
   updater = metro.init()
@@ -94,21 +69,6 @@ function init()
   updater.event = update_screen
   updater:start()
 
-  -- build up the modulators
-  for i,m in ipairs(modulators) do
-      if m.default == nil then 
-        modulators[i].default = 0
-      end
-      if m.min == nil then 
-        modulators[i].min = 0
-      end
-      if m.max == nil then 
-        modulators[i].max = 1
-      end
-      if m.interval==nil then
-        modulators[i].interval = 0.01
-      end    
-  end
 
   params:add_separator("engine")
   for i,m in ipairs(modulators) do 
@@ -201,6 +161,8 @@ function init()
   softcut.event_render(on_render)
   softcut.poll_start_phase()
   params:bang()
+
+  -- set the bpm
   engine.bpm(clock.get_tempo())
 
   -- setup audio
@@ -212,6 +174,50 @@ function init()
   params:set("1erase",5)
   params:set("2erase",15)
   params:set("3erase",10)
+
+
+
+  -- build up the modulators
+  -- add loops
+  -- evenly space out current modulators
+  for i,_ in ipairs(modulators) do 
+    modulators[i].position = util.clamp(i/#modulators*100,1,100)
+  end
+  -- add samples
+  for i=1,8 do 
+    modulators[#modulators+1] = {para="sample"..i.."amp",name=get_sample_name(i),engine="sample"..i,max=0.5,default=0.5,position=9*i}
+  end
+  -- add loop modulation
+  for i=1,3 do 
+    modulators[#modulators+1] = {name="loop"..i,max=0.5,default=0.5,position=100+6*i}
+  end
+  for i,m in ipairs(modulators) do
+      if m.default == nil then 
+        modulators[i].default = 0
+      end
+      if m.min == nil then 
+        modulators[i].min = 0
+      end
+      if m.max == nil then 
+        modulators[i].max = 1
+      end
+      if m.interval==nil then
+        modulators[i].interval = 0.01
+      end    
+      if m.para == nil then 
+        modulators[i].para = m.name 
+      end
+      modulators[i].width = util.clamp(gaussian(12,6),3,30) -- used for buildings
+  end
+  modulator_ordering = {}
+  for i, _ in ipairs(modulators) do 
+    local pos = math.random(1,#modulator_ordering+1)
+    table.insert(modulator_ordering,pos,i)
+  end
+  star_positions = {}
+  for i=1,math.random(15,30) do
+    star_positions[i] = {math.random(1,110),math.random(1,19),math.random(1,15),math.random(1,10)/10}
+  end
 end
 
 function update_positions(i,x)
@@ -295,7 +301,7 @@ function enc(k,d)
     if m.interval == 1 then 
       d = sign(d)
     end
-    params:set(m.name,util.clamp(params:get(m.name)+d*m.interval,m.min,m.max))
+    params:set(m.para,util.clamp(params:get(m.para)+d*m.interval,m.min,m.max))
   elseif k==1 then 
     ui_enc3_on = clock.get_beats()
     for i,m in ipairs(modulators) do 
@@ -303,7 +309,7 @@ function enc(k,d)
         if m.interval == 1 then 
           d = sign(d)
         end
-        params:set(m.name,util.clamp(params:get(m.name)+d*m.interval,m.min,m.max))
+        params:set(m.para,util.clamp(params:get(m.para)+d*m.interval,m.min,m.max))
       end
     end
   end
