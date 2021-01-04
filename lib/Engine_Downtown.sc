@@ -27,8 +27,16 @@ Engine_Downtown : CroneEngine {
 	var <synthStorm;
 	var <sampleBirds;
 	var sampleBirdsBuffer;
+	var <sampleSax;
+	var sampleSaxBuffer;
+	var <sampleWaves;
+	var sampleWavesBuffer;
+	var <sampleFootsteps;
+	var sampleFootstepsBuffer;
 	var <sampleBLM;
 	var sampleBLMBuffer;
+	var <sampleTinyWings;
+	var sampleTinyWingsBuffer;
 
 	// Define a class method when an object is created
 	*new { arg context, doneCallback;
@@ -39,18 +47,43 @@ Engine_Downtown : CroneEngine {
 	// Defined as an empty method in CroneEngine
 	// https://github.com/monome/norns/blob/master/sc/core/CroneEngine.sc#L31
 	alloc {
-		sampleBirdsBuffer = Buffer.read(context.server,"/home/we/dust/audio/downtown/birds_morning.wav");
+		sampleTinyWingsBuffer = Buffer.read(context.server,"/home/we/dust/code/downtown/samples/sampleTinyWings.wav");
+		sampleTinyWings = {
+			arg amp=0.0, amplag=0.02;
+			PlayBuf.ar(2,sampleTinyWingsBuffer,BufRateScale.kr(sampleTinyWingsBuffer),loop:1)*Lag.ar(K2A.ar(amp), amplag)
+		}.play(target: context.xg);
+
+		sampleBLMBuffer = Buffer.read(context.server,"/home/we/dust/code/downtown/samples/sampleBLM.wav");
+		sampleBLM = {
+			arg amp=0.0, amplag=0.02;
+			PlayBuf.ar(2,sampleBLMBuffer,BufRateScale.kr(sampleBLMBuffer),loop:1)*Lag.ar(K2A.ar(amp), amplag)
+		}.play(target: context.xg);
+
+		sampleBirdsBuffer = Buffer.read(context.server,"/home/we/dust/code/downtown/samples/sampleBirds.wav");
 		sampleBirds = {
 			arg amp=0.0, amplag=0.02;
 			PlayBuf.ar(2,sampleBirdsBuffer,BufRateScale.kr(sampleBirdsBuffer),loop:1)*Lag.ar(K2A.ar(amp), amplag)
 		}.play(target: context.xg);
 
-
-		sampleBLMBuffer = Buffer.read(context.server,"/home/we/dust/audio/downtown/blm.wav");
-		sampleBLM = {
+		sampleSaxBuffer = Buffer.read(context.server,"/home/we/dust/code/downtown/samples/sampleSax.wav");
+		sampleSax = {
 			arg amp=0.0, amplag=0.02;
-			PlayBuf.ar(2,sampleBLMBuffer,BufRateScale.kr(sampleBLMBuffer),loop:1)*Lag.ar(K2A.ar(amp), amplag)
+			PlayBuf.ar(2,sampleSaxBuffer,BufRateScale.kr(sampleSaxBuffer),loop:1)*Lag.ar(K2A.ar(amp), amplag)
 		}.play(target: context.xg);
+
+		sampleWavesBuffer = Buffer.read(context.server,"/home/we/dust/code/downtown/samples/sampleWaves.wav");
+		sampleWaves = {
+			arg amp=0.0, amplag=0.02;
+			PlayBuf.ar(2,sampleWavesBuffer,BufRateScale.kr(sampleWavesBuffer),loop:1)*Lag.ar(K2A.ar(amp), amplag)
+		}.play(target: context.xg);
+
+
+		sampleFootstepsBuffer = Buffer.read(context.server,"/home/we/dust/code/downtown/samples/sampleFootsteps.wav");
+		sampleFootsteps = {
+			arg amp=0.0, amplag=0.02;
+			PlayBuf.ar(2,sampleFootstepsBuffer,BufRateScale.kr(sampleFootstepsBuffer),loop:1)*Lag.ar(K2A.ar(amp), amplag)
+		}.play(target: context.xg);
+
 
 		// birds, adapted from https://twitter.com/aucotsi/status/408981450994638848
 		synthBirds = {
@@ -226,9 +259,29 @@ Engine_Downtown : CroneEngine {
 		this.addCommand("sampleBirds","f", { arg msg;
 			sampleBirds.set(\amp, msg[1]);
 		});
+
+		this.addCommand("sampleSax","f", { arg msg;
+			sampleSax.set(\amp, msg[1]);
+		});
+
+		this.addCommand("sampleWaves","f", { arg msg;
+			sampleWaves.set(\amp, msg[1]);
+		});
+
+		this.addCommand("sampleFootsteps","f", { arg msg;
+			sampleFootsteps.set(\amp, msg[1]);
+		});
+
 		this.addCommand("sampleBLM","f", { arg msg;
 			sampleBLM.set(\amp, msg[1]);
 		});
+
+		this.addCommand("sampleTinyWings","f", { arg msg;
+			sampleTinyWings.set(\amp, msg[1]);
+		});
+
+
+
 
 	}
 	// define a function that is called when the synth is shut down
@@ -242,7 +295,15 @@ Engine_Downtown : CroneEngine {
 		synthStorm.free;
 		sampleBirds.free;
 		sampleBirdsBuffer.free;
+		sampleSax.free;
+		sampleSaxBuffer.free;
+		sampleWaves.free;
+		sampleWavesBuffer.free;
+		sampleFootsteps.free;
+		sampleFootstepsBuffer.free;
 		sampleBLM.free;
 		sampleBLMBuffer.free;
+		sampleTinyWings.free;
+		sampleTinyWingsBuffer.free;
 	}
 }

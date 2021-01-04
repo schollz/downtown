@@ -27,11 +27,15 @@ loop_max_beats = 16
 -- if you change the engine you should change these
 modulators = {  
   -- these are engine related (see the engine)
-  {name="sampleBirds",engine="sampleBirds",max=0.6},
-  {name="sampleBLM",engine="sampleBLM",max=0.6},
+  {name="birds",engine="sampleBirds",max=1.0,nature=true},
+  {name="tiny wings",engine="sampleTinyWings",max=1.0,nature=true},
+  {name="sax",engine="sampleSax",max=0.6},
+  {name="water",engine="sampleWaves",max=0.3,nature=true},
+  {name="footsteps",engine="sampleFootsteps",max=0.6,nature=true},
   {name="storm",engine="storm",max=0.6},
   {name="powerline",engine="power",max=0.5},
-  {name="birds",engine="birds",max=1.0},
+  {name="protest",engine="sampleBLM",max=0.5},
+  {name="more birds",engine="birds",max=1.0,nature=true},
   {name="bells",engine="bells",max=1.0},
   {name="pulse",engine="pulse",max=0.5},
   {name="pulse note",engine="pulsenote",min=12,max=60,interval=1,default=29},
@@ -76,7 +80,7 @@ function init()
   for i, _ in ipairs(modulators) do 
     local pos = math.random(1,#modulator_ordering+1)
     table.insert(modulator_ordering,pos,i)
-    city_widths[i] = util.clamp(gaussian(1,0.15),0.3,1)
+    city_widths[i] = util.clamp(gaussian(12,6),3,30)
   end
   star_positions = {}
   for i=1,math.random(15,30) do
@@ -317,7 +321,7 @@ end
 
 function draw_tree(i,order)
   m = modulators[i]
-  v = params:get(m.name)/m.max
+  v = params:get(m.name)/(m.max-m.min)
   if v == 0 then 
     do return end
   end
@@ -361,17 +365,14 @@ end
 
 function draw_building(i,order)
     m = modulators[i]
-    v = params:get(m.name)/m.max
+    v = (params:get(m.name)-m.min)/(m.max-m.min)
     if v == 0 then 
       do return end
     end
     x = (i-1)*math.floor(128/(#modulators))+1
     y = bar_position
-    w = math.floor(128/#modulators)+2
-    if i==#modulators then 
-      w = w -3
-    end
-    w = city_widths[i]*w
+
+    w = city_widths[i]
     h = bar_position-1
     name = ""
     highlight = i==ui_choice_mod
@@ -423,10 +424,14 @@ function redraw()
   -- draw engine skyline
   draw_stars()
   draw_moon()
-  draw_godzilla()
   for order,i in ipairs(modulator_ordering) do
-    draw_tree(i,order)
+    if modulators[i].nature == true then 
+      draw_tree(i,order)
+    else
+      draw_building(i,order)
+    end
   end
+  draw_godzilla()
 
   -- show samples
   screen.level(15)
@@ -486,11 +491,12 @@ function redraw()
   if ui_choice_mod > 0 then 
     x = math.floor((ui_choice_mod-1)/(#modulators)*128)+2
     y = bar_position+bar_height
-    w = math.floor(128/#modulators)+2
-    if ui_choice_mod==#modulators then 
-      w = w -3
-    end
-    w = city_widths[ui_choice_mod]*w
+    -- w = math.floor(128/#modulators)+2
+    -- if ui_choice_mod==#modulators then 
+    --   w = w -3
+    -- end
+    -- w = city_widths[ui_choice_mod]*w
+    w = city_widths[ui_choice_mod]
     screen.level(0)
     if ui_choice_mod >= #modulators-1 then 
       x = math.floor((ui_choice_mod)/(#modulators)*128)-2
