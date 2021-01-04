@@ -45,6 +45,7 @@ city_widths={}
 star_positions={}
 defaults_set=false
 debounce_params_save=0
+sprite_positions={}
 
 -- WAVEFORMS
 waveform_samples={{}}
@@ -85,53 +86,34 @@ function init()
   audio.level_eng_cut(0)
   audio.level_adc_cut(1)
   audio.level_tape_cut(1)
-  
-  -- -- more defaults
-  -- params:set("1erase",5)
-  -- params:set("2erase",15)
-  -- params:set("3erase",10)
-  
-  -- -- build up the modulators
-  -- -- add loops
-  -- -- evenly space out current modulators
-  -- for i,_ in ipairs(modulators) do
-  --   modulators[i].position=util.clamp(i/#modulators*100,1,100)
-  -- end
-  -- -- add samples
-  -- for i=1,8 do
-  --   modulators[#modulators+1]={para="sample"..i.."amp",name=get_sample_name(i),engine="sample"..i,max=0.5,default=0.5,position=9*i}
-  -- end
-  -- -- add loop modulation
-  -- for i=1,3 do
-  --   modulators[#modulators+1]={name="loop"..i,max=0.5,default=0.5,position=100+6*i}
-  -- end
-  -- for i,m in ipairs(modulators) do
-  --   if m.default==nil then
-  --     modulators[i].default=0
-  --   end
-  --   if m.min==nil then
-  --     modulators[i].min=0
-  --   end
-  --   if m.max==nil then
-  --     modulators[i].max=1
-  --   end
-  --   if m.interval==nil then
-  --     modulators[i].interval=0.01
-  --   end
-  --   if m.para==nil then
-  --     modulators[i].para=m.name
-  --   end
-  --   modulators[i].width=util.clamp(gaussian(12,6),3,30) -- used for buildings
-  -- end
-  -- modulator_ordering={}
-  -- for i,_ in ipairs(modulators) do
-  --   local pos=math.random(1,#modulator_ordering+1)
-  --   table.insert(modulator_ordering,pos,i)
-  -- end
-  -- star_positions={}
-  -- for i=1,math.random(15,30) do
-  --   star_positions[i]={math.random(1,110),math.random(1,19),math.random(1,15),math.random(1,10)/10}
-  -- end
+
+  -- sprite star positions
+  star_positions={}
+  for i=1,math.random(15,30) do
+    star_positions[i]={math.random(1,110),math.random(1,19),math.random(1,15),math.random(1,10)/10}
+  end
+  -- update sprite positions
+  update_sprite_positions()
+end
+
+function update_sprite_positions()
+  sprite_positions = {}
+  for i,m in ipairs(modulators) do 
+    table.insert(sprite_positions,{"sc"..i,params:get("sprite_pos_sc"..i)})
+  end
+  for i=1,8 do 
+    if not string.find(params:get("file_fr"..i),"silence.wav") then 
+      table.insert(sprite_positions,{"fr"..i,params:get("sprite_pos_fr"..i)})
+    end
+  end
+  for i=1,3 do 
+    table.insert(sprite_positions,{"loop"..i,100+7*i})
+  end
+  table.sort(sprite_positions,compare_second)
+end
+
+function compare_second(a,b)
+  return a[2] < b[2]
 end
 
 function setup_parameters()
@@ -152,12 +134,12 @@ function setup_parameters()
         debounce_params_save=3
       end
     }
-    params:add{type="option",id="loves_sc"..i,name="loves",options={"no","yes"},default=1,
+    params:add{type="option",id="loves_sc"..i,name="loves gojira",options={"no","yes"},default=1,
       action=function(value)
         debounce_params_save=3
       end
     }
-    params:add{type="option",id="fears_sc"..i,name="fears",options={"no","yes"},default=2,
+    params:add{type="option",id="fears_sc"..i,name="fears gojira",options={"no","yes"},default=2,
       action=function(value)
         debounce_params_save=3
       end
@@ -177,6 +159,8 @@ function setup_parameters()
     params:hide("sprite_yspacing_sc"..i)
     params:add_number("sprite_num_sc"..i,0,100,math.random(1,15))
     params:hide("sprite_num_sc"..i)
+    params:add_number("sprite_pos_sc"..i,0,100,math.floor(i*100/#modulators))
+    params:hide("sprite_pos_sc"..i)
   end
   
 
@@ -188,6 +172,7 @@ function setup_parameters()
         local enginecmd="engine.sample"..i.."("..value..")"
         local f=load(enginecmd)
         f()
+        update_sprite_positions() -- adding a new sprite in this case
         debounce_params_save=3
     end)
     params:add{type="control",id="amp_fr"..i,name="amp",controlspec=controlspec.new(0,1,"lin",0.01,0,""),
@@ -198,8 +183,26 @@ function setup_parameters()
         debounce_params_save=3
       end
     }
+    -- parameters for drawing
+    params:add_number("sprite_zorder_fr"..i,0,100,math.random(1,15))
+    params:hide("sprite_zorder_fr"..i)
+    params:add_number("sprite_width_fr"..i,0,100,util.clamp(gaussian(12,6),3,30))
+    params:hide("sprite_width_fr"..i)
+    params:add_number("sprite_density_fr"..i,0,100,math.random(20,90)/100.0)
+    params:hide("sprite_density_fr"..i)
+    params:add_number("sprite_xspacing_fr"..i,0,100,math.random(2,4))
+    params:hide("sprite_xspacing_fr"..i)
+    params:add_number("sprite_xspacing2_fr"..i,0,100,math.random(1,2))
+    params:hide("sprite_xspacing2_fr"..i)
+    params:add_number("sprite_yspacing_fr"..i,0,100,math.random(2,4))
+    params:hide("sprite_yspacing_fr"..i)
+    params:add_number("sprite_num_fr"..i,0,100,math.random(1,15))
+    params:hide("sprite_num_fr"..i)
+    params:add_number("sprite_pos_fr"..i,0,100,math.floor(i*100/8))
+    params:hide("sprite_pos_fr"..i)
   end
-  -- add params
+
+  -- parameters for softcut loops
   for i=1,3 do
     params:add_separator("loop "..i,7)
     params:add {type="control",id="loop"..i,name="level",controlspec=controlspec.new(0,0.5,'lin',0.01,0.5,''),
@@ -261,6 +264,12 @@ function update_positions(i,x)
 end
 
 function update_screen()
+  if debounce_params_save > 0 then 
+    debounce_params_save = debounce_params_save - 1
+    if debounce_params_save == 0 then 
+      -- TODO: save
+    end
+  end
   if clock.get_beats()-ui_enc3_on>2 and ui_show_flames then
     ui_show_flames=false
   elseif ui_show_flames==false and clock.get_beats()-ui_enc3_on<2 then
