@@ -25,18 +25,24 @@ Engine_Downtown : CroneEngine {
 	var <synthKick;
 	var <synthPower;
 	var <synthStorm;
-	var <sampleBirds;
-	var sampleBirdsBuffer;
-	var <sampleSax;
-	var sampleSaxBuffer;
-	var <sampleWaves;
-	var sampleWavesBuffer;
-	var <sampleFootsteps;
-	var sampleFootstepsBuffer;
-	var <sampleBLM;
-	var sampleBLMBuffer;
-	var <sampleTinyWings;
-	var sampleTinyWingsBuffer;
+
+	// samples
+	var <sample1;
+	var  sample1Buffer;
+	var <sample2;
+	var  sample2Buffer;
+	var <sample3;
+	var  sample3Buffer;
+	var <sample4;
+	var  sample4Buffer;
+	var <sample5;
+	var  sample5Buffer;
+	var <sample6;
+	var  sample6Buffer;
+	var <sample7;
+	var  sample7Buffer;
+	var <sample8;
+	var  sample8Buffer;
 
 	// Define a class method when an object is created
 	*new { arg context, doneCallback;
@@ -47,43 +53,54 @@ Engine_Downtown : CroneEngine {
 	// Defined as an empty method in CroneEngine
 	// https://github.com/monome/norns/blob/master/sc/core/CroneEngine.sc#L31
 	alloc {
-		sampleTinyWingsBuffer = Buffer.read(context.server,"/home/we/dust/code/downtown/samples/sampleTinyWings.wav");
-		sampleTinyWings = {
+
+		sample1Buffer = Buffer.read(context.server,"/home/we/dust/code/downtown/samples/silence.wav");
+		sample1 = {
 			arg amp=0.0, amplag=0.02;
-			PlayBuf.ar(2,sampleTinyWingsBuffer,BufRateScale.kr(sampleTinyWingsBuffer),loop:1)*Lag.ar(K2A.ar(amp), amplag)
+			PlayBuf.ar(2,sample1Buffer,BufRateScale.kr(sample1Buffer),loop:1)*Lag.ar(K2A.ar(amp), amplag)
 		}.play(target: context.xg);
 
-		sampleBLMBuffer = Buffer.read(context.server,"/home/we/dust/code/downtown/samples/sampleBLM.wav");
-		sampleBLM = {
+		sample2Buffer = Buffer.read(context.server,"/home/we/dust/code/downtown/samples/silence.wav");
+		sample2 = {
 			arg amp=0.0, amplag=0.02;
-			PlayBuf.ar(2,sampleBLMBuffer,BufRateScale.kr(sampleBLMBuffer),loop:1)*Lag.ar(K2A.ar(amp), amplag)
+			PlayBuf.ar(2,sample2Buffer,BufRateScale.kr(sample2Buffer),loop:1)*Lag.ar(K2A.ar(amp), amplag)
 		}.play(target: context.xg);
 
-		sampleBirdsBuffer = Buffer.read(context.server,"/home/we/dust/code/downtown/samples/silence.wav");
-		sampleBirds = {
+		sample3Buffer = Buffer.read(context.server,"/home/we/dust/code/downtown/samples/silence.wav");
+		sample3 = {
 			arg amp=0.0, amplag=0.02;
-			PlayBuf.ar(2,sampleBirdsBuffer,BufRateScale.kr(sampleBirdsBuffer),loop:1)*Lag.ar(K2A.ar(amp), amplag)
+			PlayBuf.ar(2,sample3Buffer,BufRateScale.kr(sample3Buffer),loop:1)*Lag.ar(K2A.ar(amp), amplag)
 		}.play(target: context.xg);
 
-		sampleSaxBuffer = Buffer.read(context.server,"/home/we/dust/code/downtown/samples/sampleSax.wav");
-		sampleSax = {
+		sample4Buffer = Buffer.read(context.server,"/home/we/dust/code/downtown/samples/silence.wav");
+		sample4 = {
 			arg amp=0.0, amplag=0.02;
-			PlayBuf.ar(2,sampleSaxBuffer,BufRateScale.kr(sampleSaxBuffer),loop:1)*Lag.ar(K2A.ar(amp), amplag)
+			PlayBuf.ar(2,sample4Buffer,BufRateScale.kr(sample4Buffer),loop:1)*Lag.ar(K2A.ar(amp), amplag)
 		}.play(target: context.xg);
 
-		sampleWavesBuffer = Buffer.read(context.server,"/home/we/dust/code/downtown/samples/sampleWaves.wav");
-		sampleWaves = {
+		sample5Buffer = Buffer.read(context.server,"/home/we/dust/code/downtown/samples/silence.wav");
+		sample5 = {
 			arg amp=0.0, amplag=0.02;
-			PlayBuf.ar(2,sampleWavesBuffer,BufRateScale.kr(sampleWavesBuffer),loop:1)*Lag.ar(K2A.ar(amp), amplag)
+			PlayBuf.ar(2,sample5Buffer,BufRateScale.kr(sample5Buffer),loop:1)*Lag.ar(K2A.ar(amp), amplag)
 		}.play(target: context.xg);
 
-
-		sampleFootstepsBuffer = Buffer.read(context.server,"/home/we/dust/code/downtown/samples/sampleFootsteps.wav");
-		sampleFootsteps = {
+		sample6Buffer = Buffer.read(context.server,"/home/we/dust/code/downtown/samples/silence.wav");
+		sample6 = {
 			arg amp=0.0, amplag=0.02;
-			PlayBuf.ar(2,sampleFootstepsBuffer,BufRateScale.kr(sampleFootstepsBuffer),loop:1)*Lag.ar(K2A.ar(amp), amplag)
+			PlayBuf.ar(2,sample6Buffer,BufRateScale.kr(sample6Buffer),loop:1)*Lag.ar(K2A.ar(amp), amplag)
 		}.play(target: context.xg);
 
+		sample7Buffer = Buffer.read(context.server,"/home/we/dust/code/downtown/samples/silence.wav");
+		sample7 = {
+			arg amp=0.0, amplag=0.02;
+			PlayBuf.ar(2,sample7Buffer,BufRateScale.kr(sample7Buffer),loop:1)*Lag.ar(K2A.ar(amp), amplag)
+		}.play(target: context.xg);
+
+		sample8Buffer = Buffer.read(context.server,"/home/we/dust/code/downtown/samples/silence.wav");
+		sample8 = {
+			arg amp=0.0, amplag=0.02;
+			PlayBuf.ar(2,sample8Buffer,BufRateScale.kr(sample8Buffer),loop:1)*Lag.ar(K2A.ar(amp), amplag)
+		}.play(target: context.xg);
 
 		// birds, adapted from https://twitter.com/aucotsi/status/408981450994638848
 		synthBirds = {
@@ -256,43 +273,82 @@ Engine_Downtown : CroneEngine {
 			synthStorm.set(\amp, msg[1]);
 		});
 
-		this.addCommand("sampleBirds","f", { arg msg;
-			sampleBirds.set(\amp, msg[1]);
+		this.addCommand("sample1","f", { arg msg;
+			sample1.set(\amp, msg[1]);
 		});
 
-		this.addCommand("sampleSax","f", { arg msg;
-			sampleSax.set(\amp, msg[1]);
+		this.addCommand("sample1file","s", { arg msg;
+			sample1Buffer.free;
+			sample1Buffer = Buffer.read(context.server,msg[1]);
 		});
 
-		this.addCommand("sampleWaves","f", { arg msg;
-			sampleWaves.set(\amp, msg[1]);
+		this.addCommand("sample2","f", { arg msg;
+			sample2.set(\amp, msg[1]);
 		});
 
-		this.addCommand("sampleFootsteps","f", { arg msg;
-			sampleFootsteps.set(\amp, msg[1]);
+		this.addCommand("sample2file","s", { arg msg;
+			sample2Buffer.free;
+			sample2Buffer = Buffer.read(context.server,msg[1]);
 		});
 
-		this.addCommand("sampleBLM","f", { arg msg;
-			sampleBLM.set(\amp, msg[1]);
+		this.addCommand("sample3","f", { arg msg;
+			sample3.set(\amp, msg[1]);
 		});
 
-		this.addCommand("sampleTinyWings","f", { arg msg;
-			sampleTinyWings.set(\amp, msg[1]);
+		this.addCommand("sample3file","s", { arg msg;
+			sample3Buffer.free;
+			sample3Buffer = Buffer.read(context.server,msg[1]);
 		});
 
-
-		this.addCommand("test1","s", { arg msg;
-			sampleBirdsBuffer.free;
-			sampleBirdsBuffer = Buffer.read(context.server,"/home/we/dust/code/downtown/samples/"++msg[1]);
+		this.addCommand("sample4","f", { arg msg;
+			sample4.set(\amp, msg[1]);
 		});
 
-// engine.test1("/home/we/dust/code/downtown/samples/sampleBirds.wav")
+		this.addCommand("sample4file","s", { arg msg;
+			sample4Buffer.free;
+			sample4Buffer = Buffer.read(context.server,msg[1]);
+		});
 
+		this.addCommand("sample5","f", { arg msg;
+			sample5.set(\amp, msg[1]);
+		});
 
+		this.addCommand("sample5file","s", { arg msg;
+			sample5Buffer.free;
+			sample5Buffer = Buffer.read(context.server,msg[1]);
+		});
+
+		this.addCommand("sample6","f", { arg msg;
+			sample6.set(\amp, msg[1]);
+		});
+
+		this.addCommand("sample6file","s", { arg msg;
+			sample6Buffer.free;
+			sample6Buffer = Buffer.read(context.server,msg[1]);
+		});
+
+		this.addCommand("sample7","f", { arg msg;
+			sample7.set(\amp, msg[1]);
+		});
+
+		this.addCommand("sample7file","s", { arg msg;
+			sample7Buffer.free;
+			sample7Buffer = Buffer.read(context.server,msg[1]);
+		});
+
+		this.addCommand("sample8","f", { arg msg;
+			sample8.set(\amp, msg[1]);
+		});
+
+		this.addCommand("sample8file","s", { arg msg;
+			sample8Buffer.free;
+			sample8Buffer = Buffer.read(context.server,msg[1]);
+		});
 
 	}
 	// define a function that is called when the synth is shut down
 	free {
+		// synths
 		synthBirds.free;
 		synthBells.free;
 		synthPulse.free;
@@ -300,17 +356,23 @@ Engine_Downtown : CroneEngine {
 		synthKick.free;
 		synthPower.free;
 		synthStorm.free;
-		sampleBirds.free;
-		sampleBirdsBuffer.free;
-		sampleSax.free;
-		sampleSaxBuffer.free;
-		sampleWaves.free;
-		sampleWavesBuffer.free;
-		sampleFootsteps.free;
-		sampleFootstepsBuffer.free;
-		sampleBLM.free;
-		sampleBLMBuffer.free;
-		sampleTinyWings.free;
-		sampleTinyWingsBuffer.free;
+
+		// sample buffers
+		sample1.free;
+		sample1Buffer.free;
+		sample2.free;
+		sample2Buffer.free;
+		sample3.free;
+		sample3Buffer.free;
+		sample4.free;
+		sample4Buffer.free;
+		sample5.free;
+		sample5Buffer.free;
+		sample6.free;
+		sample6Buffer.free;
+		sample7.free;
+		sample7Buffer.free;
+		sample8.free;
+		sample8Buffer.free;
 	}
 }
