@@ -59,7 +59,7 @@ Engine_Downtown : CroneEngine {
 			PlayBuf.ar(2,sampleBLMBuffer,BufRateScale.kr(sampleBLMBuffer),loop:1)*Lag.ar(K2A.ar(amp), amplag)
 		}.play(target: context.xg);
 
-		sampleBirdsBuffer = Buffer.read(context.server,"/home/we/dust/code/downtown/samples/sampleBirds.wav");
+		sampleBirdsBuffer = Buffer.read(context.server,"/home/we/dust/code/downtown/samples/silence.wav");
 		sampleBirds = {
 			arg amp=0.0, amplag=0.02;
 			PlayBuf.ar(2,sampleBirdsBuffer,BufRateScale.kr(sampleBirdsBuffer),loop:1)*Lag.ar(K2A.ar(amp), amplag)
@@ -280,6 +280,13 @@ Engine_Downtown : CroneEngine {
 			sampleTinyWings.set(\amp, msg[1]);
 		});
 
+
+		this.addCommand("test1","s", { arg msg;
+			sampleBirdsBuffer.free;
+			sampleBirdsBuffer = Buffer.read(context.server,"/home/we/dust/code/downtown/samples/"++msg[1]);
+		});
+
+// engine.test1("/home/we/dust/code/downtown/samples/sampleBirds.wav")
 
 
 
