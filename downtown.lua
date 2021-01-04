@@ -135,9 +135,10 @@ function init()
 end
 
 function setup_parameters()
-  -- add supercollider
+
+  -- add supercollider params + sprites
   for i,m in ipairs(modulators) do
-    params:add_group(m.name,2)
+    params:add_group(m.name,11)
     params:add{type="control",id="engine_sc"..i,name=m.name,controlspec=controlspec.new(m.min,m.max,"lin",m.interval,m.default,""),
       action=function(value)
         local enginecmd="engine."..m.name.."("..value..")"
@@ -178,6 +179,26 @@ function setup_parameters()
     params:hide("sprite_num_sc"..i)
   end
   
+
+  -- add field recording params + sprites
+  for i=1,8 do 
+    params:add_group("field recording "..i)
+    params:add_file("file_fr"..i,"file",_path.audio)
+    params:set_action("file_fr"..i,funtion(value)
+        local enginecmd="engine.sample"..i.."("..value..")"
+        local f=load(enginecmd)
+        f()
+        debounce_params_save=3
+    end)
+    params:add{type="control",id="amp_fr"..i,name="amp",controlspec=controlspec.new(0,1,"lin",0.01,0,""),
+      action=function(value)
+        local enginecmd="engine.sample"..i.."amp("..value..")"
+        local f=load(enginecmd)
+        f()
+        debounce_params_save=3
+      end
+    }
+  end
   -- add params
   for i=1,3 do
     params:add_separator("loop "..i,7)
