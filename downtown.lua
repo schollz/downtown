@@ -15,6 +15,8 @@
 
 local Formatters=require 'formatters'
 
+include("lib/pixels") -- global functions
+
 engine.name = "Downtown"
 
 ---------           START CHANGING CODE           ---------
@@ -62,6 +64,8 @@ current_positions={1,1,1,1,1,1}
 bar_position = 20
 waveform_height = 26  
 bar_height = 5
+ui_show_flames = false
+ui_enc3_on = 0
 
 function init()
   norns.enc.sens(2,4) 
@@ -76,7 +80,7 @@ function init()
   end
   star_positions = {}
   for i=1,math.random(15,30) do
-    star_positions[i] = {math.random(1,128),math.random(1,19),math.random(1,15),math.random(1,10)/10}
+    star_positions[i] = {math.random(1,110),math.random(1,19),math.random(1,15),math.random(1,10)/10}
   end
 
   -- setup the running clock
@@ -211,6 +215,11 @@ function update_positions(i,x)
 end
 
 function update_screen()
+  if clock.get_beats()-ui_enc3_on > 2 and ui_show_flames then 
+    ui_show_flames = false
+  elseif ui_show_flames == false and clock.get_beats()-ui_enc3_on < 2 then 
+    ui_show_flames = true
+  end
   softcut.render_buffer(1, 1, clock.get_beat_sec()*loop_max_beats*3+1, 128)
   softcut.render_buffer(2, 1, clock.get_beat_sec()*loop_max_beats*3+1, 128)
 	redraw()
@@ -283,6 +292,16 @@ function enc(k,d)
       d = sign(d)
     end
     params:set(m.name,util.clamp(params:get(m.name)+d*m.interval,m.min,m.max))
+  elseif k==1 then 
+    ui_enc3_on = clock.get_beats()
+    for i,m in ipairs(modulators) do 
+      if params:get(m.name) > 0 then 
+        if m.interval == 1 then 
+          d = sign(d)
+        end
+        params:set(m.name,util.clamp(params:get(m.name)+d*m.interval,m.min,m.max))
+      end
+    end
   end
 end
 
@@ -292,6 +311,52 @@ function key(k,z)
   elseif k==3 and z==1 and ui_choice_sample > 0 then 
     params:set(ui_choice_sample.."rec",1-params:get(ui_choice_sample.."rec"))
   end
+end
+
+
+
+function draw_tree(i,order)
+  m = modulators[i]
+  v = params:get(m.name)/m.max
+  if v == 0 then 
+    do return end
+  end
+  height=(1-v)*18
+  x = (i-1)*math.floor(128/(#modulators))+1
+  math.randomseed(x)
+  local tree_num = math.random(1,#tree_pixels)
+  screen.level(math.ceil(10*order/#modulators))
+  for _, p in ipairs(tree_pixels[tree_num].dark) do
+        if p[2]+height > height and p[2]+height<19 then
+            screen.pixel(p[1]+x,p[2]+height)
+        end
+  end
+  screen.fill()
+  screen.level(0)
+  for _, p in ipairs(tree_pixels[tree_num].light) do
+        if p[2]+height > height and p[2]+height<19 then
+            screen.pixel(p[1]+x,p[2]+height)
+        end
+  end
+  screen.fill()
+end
+
+function draw_boom()
+  if not ui_show_flames then 
+    do return end 
+  end
+  math.randomseed(math.ceil(clock.get_beats()*1000))
+  i = math.random(1,2)
+  screen.level(15)
+  for _, p in ipairs(fire_pixels[i].dark) do
+    screen.pixel(p[1],p[2])
+  end
+  screen.fill()
+  screen.level(0)
+  for _, p in ipairs(fire_pixels[i].light) do
+    screen.pixel(p[1],p[2])
+  end
+  screen.fill()
 end
 
 function draw_building(i,order)
@@ -360,7 +425,7 @@ function redraw()
   draw_moon()
   draw_godzilla()
   for order,i in ipairs(modulator_ordering) do
-    draw_building(i,order)
+    draw_tree(i,order)
   end
 
   -- show samples
@@ -439,7 +504,7 @@ function redraw()
       screen.text_center(modulators[ui_choice_mod].name)
     end
   end
-
+  draw_boom()
   screen.update()
 end
 
