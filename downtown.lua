@@ -215,6 +215,8 @@ function setup_parameters()
           f()
           update_sprite_positions() -- adding a new sprite in this case
           debounce_params_save=3
+          pathname,filename,ext=string.match(value,"(.-)([^\\/]-%.?([^%.\\/]*))$")
+          params:set("sprite_name_fr"..i,string.gsub(filename,".wav",""))
         end
     end)
     params:add{type="control",id="fr"..i,name="amp",controlspec=controlspec.new(0,1,"lin",0.01,0,""),
@@ -274,7 +276,7 @@ function setup_parameters()
   params:add_separator("softcut loops")
   for i=1,3 do
     params:add_group("loop "..i,9)
-    params:add {type="control",id="loop"..i,name="level",controlspec=controlspec.new(0,0.5,'lin',0.01,0.5-(i/6),''),
+    params:add {type="control",id="loop"..i,name="level",controlspec=controlspec.new(0,1.0,'lin',0.01,0.6-(i-1)*0.1,''),
       action=function(value)
         softcut.level(i*2,value)
         softcut.level(i*2-1,value)
@@ -366,7 +368,7 @@ function setup_parameters()
     params:set("sprite_num_loop"..i,math.random(1,15))
     params:hide("sprite_num_loop"..i)
     params:add_number("sprite_pos_loop"..i)
-    params:set("sprite_pos_loop"..i,math.floor(80+i*7))
+    params:set("sprite_pos_loop"..i,math.floor(85+i*8))
     params:hide("sprite_pos_loop"..i)
   end
 
