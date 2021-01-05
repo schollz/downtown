@@ -133,7 +133,7 @@ function compare_second(a,b)
 end
 
 function setup_parameters()
-  params:add{type="control",id="maxbeats",name="max beats",controlspec=controlspec.new(1,128,"lin",1,16,"beats"),
+  params:add{type="control",id="maxbeats",name="max beats",controlspec=controlspec.new(1,128,"lin",1,16,"beats",1/128),
       action=function(value)
         debounce_set_max_beats=4
       end
@@ -541,7 +541,11 @@ function redraw()
   draw_moon()
   draw_godzilla()
   for i,sp in ipairs(sprite_view_order) do 
-    draw_sprite(sp[1],false)
+    highlight = false 
+    if ui_choice_mod > 0 then 
+      highlight = sp[1]==sprite_positions[ui_choice_mod][1]
+    end
+    draw_sprite(sp[1],highlight)
   end
   
   -- show samples
@@ -642,12 +646,16 @@ function draw_sprite(id,highlight)
   index = param_id_to_index[id]
   x = params:get("sprite_pos_"..id)
   v = (v-params.params[index].controlspec.minval) / (params.params[index].controlspec.maxval-params.params[index].controlspec.minval)
+  zorder = params:get("sprite_zorder_"..id)
+  if highlight then 
+    zorder = 15 
+  end
   if params:get("natural_"..id) == 2 then 
     -- draw tree 
-    draw_tree(x,v,params:get("sprite_num_"..id),params:get("sprite_zorder_"..id),highlight)
+    draw_tree(x,v,params:get("sprite_num_"..id),zorder)
   else
     -- draw building 
-    draw_building(x,v,params:get("sprite_width_"..id),params:get("sprite_zorder_"..id),params:get("sprite_xspacing_"..id),params:get("sprite_xspacing2_"..id),params:get("sprite_yspacing_"..id),params:get("sprite_density_"..id),highlight)
+    draw_building(x,v,params:get("sprite_width_"..id),zorder,params:get("sprite_xspacing_"..id),params:get("sprite_xspacing2_"..id),params:get("sprite_yspacing_"..id),params:get("sprite_density_"..id),highlight)
   end
 end
 
