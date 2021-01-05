@@ -1,4 +1,4 @@
--- downtown v0.1.0
+-- downtown v0.2.0
 -- the cityscape is full of sound.
 --
 -- llllllll.co/t/downtown
@@ -29,12 +29,13 @@ modulators={
   {name="birds",max=1.0},
   {name="bells",max=1.0},
   {name="pulse",max=0.5},
-  {name="pulsenote",min=12,max=60,interval=1,default=29,natural=true},
+  {name="pulsenote",min=12,max=60,interval=1,default=29,natural=false,loves=false,fears=false},
   {name="snare",max=0.5},
   {name="kick",max=0.5},
 }
 
 -- state
+startup_phase=true
 update_ui=false
 softcut_loop_starts={1,1,1,1,1,1}
 softcut_loop_ends={60,60,60,60,60,60}
@@ -74,11 +75,9 @@ function init()
   
   -- initialize softcut (after parameters)
   reset_softcut()
-  softcut.event_phase(update_positions)
-  softcut.event_render(on_render)
-  softcut.poll_start_phase()
 
   -- TODO load default parameters
+  params:read()
   params:bang()
   
   -- set the bpm
@@ -97,7 +96,7 @@ function init()
   -- update sprite positions
   update_sprite_positions()
 
-  params:set("file_fr1","/home/we/dust/audio/tehn/mancini1.wav")
+  startup_phase=false
 end
 
 function update_sprite_positions()
@@ -156,17 +155,25 @@ function setup_parameters()
     if m.natural ~= nil and m.natural then 
       isnatural = 2
     end
+    loves = 1 
+    if m.loves ~= nil and m.loves then 
+      loves = 2
+    end
+    fears = 2 
+    if m.fears ~= nil and not m.fears then 
+      fears = 1
+    end
     params:add{type="option",id="natural_sc"..i,name="natural",options={"no","yes"},default=isnatural,
       action=function(value)
         debounce_params_save=3
       end
     }
-    params:add{type="option",id="loves_sc"..i,name="loves gojira",options={"no","yes"},default=1,
+    params:add{type="option",id="loves_sc"..i,name="loves gojira",options={"no","yes"},default=loves,
       action=function(value)
         debounce_params_save=3
       end
     }
-    params:add{type="option",id="fears_sc"..i,name="fears gojira",options={"no","yes"},default=2,
+    params:add{type="option",id="fears_sc"..i,name="fears gojira",options={"no","yes"},default=fears,
       action=function(value)
         debounce_params_save=3
       end
@@ -217,9 +224,18 @@ function setup_parameters()
           debounce_params_save=3
           pathname,filename,ext=string.match(value,"(.-)([^\\/]-%.?([^%.\\/]*))$")
           params:set("sprite_name_fr"..i,string.gsub(filename,".wav",""))
+          -- change currently selected to the new one
+          if startup_phase == false then
+            for j,_ in ipairs(sprite_positions) do 
+              if sprite_positions[j][1] == "fr"..i then 
+                ui_choice_mod = j 
+                break 
+              end
+            end
+          end
         end
     end)
-    params:add{type="control",id="fr"..i,name="amp",controlspec=controlspec.new(0,1,"lin",0.01,0,""),
+    params:add{type="control",id="fr"..i,name="amp",controlspec=controlspec.new(0,0.5,"lin",0.01,0,""),
       action=function(value)
         local enginecmd="engine.sample"..i.."("..value..")"
         local f=load(enginecmd)
@@ -232,12 +248,12 @@ function setup_parameters()
         debounce_params_save=3
       end
     }
-    params:add{type="option",id="loves_fr"..i,name="loves gojira",options={"no","yes"},default=2,
+    params:add{type="option",id="loves_fr"..i,name="loves gojira",options={"no","yes"},default=1,
       action=function(value)
         debounce_params_save=3
       end
     }
-    params:add{type="option",id="fears_fr"..i,name="fears gojira",options={"no","yes"},default=1,
+    params:add{type="option",id="fears_fr"..i,name="fears gojira",options={"no","yes"},default=2,
       action=function(value)
         debounce_params_save=3
       end
@@ -268,14 +284,14 @@ function setup_parameters()
     params:set("sprite_num_fr"..i,math.random(1,15))
     params:hide("sprite_num_fr"..i)
     params:add_number("sprite_pos_fr"..i)
-    params:set("sprite_pos_fr"..i,math.floor((i-1)*9+9))
+    params:set("sprite_pos_fr"..i,math.floor((i-1)*11+9))
     params:hide("sprite_pos_fr"..i)
   end
 
   -- parameters for softcut loops
   params:add_separator("softcut loops")
   for i=1,3 do
-    params:add_group("loop "..i,9)
+    params:add_group("loop "..i,10)
     params:add {type="control",id="loop"..i,name="level",controlspec=controlspec.new(0,1.0,'lin',0.01,0.6-(i-1)*0.1,''),
       action=function(value)
         softcut.level(i*2,value)
@@ -295,7 +311,9 @@ function setup_parameters()
       action=function(value)
         local loop_length=clock.get_beat_sec()*value
         softcut.loop_end(i*2,softcut_loop_starts[i*2]+loop_length)
+        softcut_loop_ends[i*2]=softcut_loop_starts[i*2]+loop_length
         softcut.loop_end(i*2-1,softcut_loop_starts[i*2-1]+loop_length)
+        softcut_loop_ends[i*2-1]=softcut_loop_starts[i*2-1]+loop_length
         debounce_params_save=3
       end
     }
@@ -387,14 +405,16 @@ function update_screen()
   if debounce_params_save > 0 then 
     debounce_params_save = debounce_params_save - 1
     if debounce_params_save == 0 then 
-      -- TODO: save
+      print("saving parameters")
+      params:write()
     end
   end
   if debounce_set_max_beats > 0 then 
     debounce_set_max_beats = debounce_set_max_beats - 1
     if debounce_set_max_beats == 0 then 
       reset_softcut()
-      -- save parameters
+      print("saving parameters")
+      params:write()
     end
   end
   if clock.get_beats()-ui_enc3_on>2 and ui_show_flames then
@@ -402,8 +422,8 @@ function update_screen()
   elseif ui_show_flames==false and clock.get_beats()-ui_enc3_on<2 then
     ui_show_flames=true
   end
-  softcut.render_buffer(1,1,clock.get_beat_sec()*loop_max_beats*3+1,128)
-  softcut.render_buffer(2,1,clock.get_beat_sec()*loop_max_beats*3+1,128)
+  softcut.render_buffer(1,1,clock.get_beat_sec()*params:get("maxbeats")*3+1,128)
+  softcut.render_buffer(2,1,clock.get_beat_sec()*params:get("maxbeats")*3+1,128)
   redraw()
 end
 
@@ -464,6 +484,9 @@ function reset_softcut()
       loop_start=loop_start+loop_length+0.5
     end
   end
+  softcut.event_phase(update_positions)
+  softcut.event_render(on_render)
+  softcut.poll_start_phase()
 end
 
 function enc(k,d)
@@ -516,10 +539,10 @@ function redraw()
   -- draw engine skyline
   draw_stars()
   draw_moon()
+  draw_godzilla()
   for i,sp in ipairs(sprite_view_order) do 
     draw_sprite(sp[1],false)
   end
-  draw_godzilla()
   
   -- show samples
   screen.level(15)
@@ -596,7 +619,12 @@ function redraw()
     --   screen.text_center(params:get("sprite_name_"..id))
     -- end
     screen.move(x+w/2,y)
-    screen.text_center(params:get("sprite_name_"..id))
+    if x+w/2 < 15 then 
+      screen.move(x,y)
+      screen.text(params:get("sprite_name_"..id))
+    else
+      screen.text_center(params:get("sprite_name_"..id))
+    end
   end
   draw_boom()
   screen.update()

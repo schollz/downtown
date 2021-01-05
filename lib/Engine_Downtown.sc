@@ -56,8 +56,8 @@ Engine_Downtown : CroneEngine {
 
 		sample1Buffer = Buffer.read(context.server,"/home/we/dust/code/downtown/samples/silence.wav");
 		sample1 = {
-			arg amp=0.0, amplag=0.02;
-			PlayBuf.ar(2,sample1Buffer,BufRateScale.kr(sample1Buffer),loop:1)*Lag.ar(K2A.ar(amp), amplag)
+			arg amp=0.0, amplag=0.02, t_trig=0;
+			PlayBuf.ar(2,sample1Buffer,BufRateScale.kr(sample1Buffer),trigger:t_trig,loop:1)*Lag.ar(K2A.ar(amp), amplag)
 		}.play(target: context.xg);
 
 		sample2Buffer = Buffer.read(context.server,"/home/we/dust/code/downtown/samples/silence.wav");
@@ -280,6 +280,11 @@ Engine_Downtown : CroneEngine {
 		this.addCommand("sample1file","s", { arg msg;
 			sample1Buffer.free;
 			sample1Buffer = Buffer.read(context.server,msg[1]);
+		});
+
+		this.addCommand("sample1reset","f", { arg msg;
+			sample1.set(\t_trig,-1);
+			sample1.set(\t_trig,1);
 		});
 
 		this.addCommand("sample2","f", { arg msg;
