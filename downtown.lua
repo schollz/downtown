@@ -337,7 +337,7 @@ function setup_parameters()
         debounce_params_save=3
       end
     }
-    params:add{type="option",id="fears_loop"..i,name="fears gojira",options={"no","yes"},default=2,
+    params:add{type="option",id="fears_loop"..i,name="fears gojira",options={"no","yes"},default=1,
       action=function(value)
         debounce_params_save=3
       end
@@ -481,16 +481,23 @@ function enc(k,d)
     end
     params:set(id,params:get(id)+d*interval)
   elseif k==1 then
-    -- TODO do godzilla
-    -- ui_enc3_on=clock.get_beats()
-    -- for i,m in ipairs(modulators) do
-    --   if params:get(m.name)>0 then
-    --     if m.interval==1 then
-    --       d=sign(d)
-    --     end
-    --     params:set(m.para,util.clamp(params:get(m.para)+d*m.interval,m.min,m.max))
-    --   end
-    -- end
+    ui_enc3_on=clock.get_beats()
+    for i,_ in ipairs(sprite_positions) do
+      local id = sprite_positions[i][1]
+      local index = param_id_to_index[id]
+      local interval = params.params[index].controlspec.step
+      if interval==1 then
+        d=sign(d)
+      end
+      if interval == 0 then 
+        interval = 0.01
+      end
+      if params:get("loves_"..id)==2 and d > 0 then 
+        params:set(id,params:get(id)+d*interval)
+      elseif params:get("fears_"..id)==2 and d < 0 then 
+        params:set(id,params:get(id)+d*interval)
+      end
+    end
   end
 end
 
