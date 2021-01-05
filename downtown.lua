@@ -29,7 +29,7 @@ modulators={
   {name="birds",max=1.0},
   {name="bells",max=1.0},
   {name="pulse",max=0.5},
-  {name="pulsenote",min=12,max=60,interval=1,default=29},
+  {name="pulsenote",min=12,max=60,interval=1,default=29,natural=true},
   {name="snare",max=0.5},
   {name="kick",max=0.5},
 }
@@ -41,17 +41,17 @@ softcut_loop_ends={60,60,60,60,60,60}
 modulator_ordering={}
 ui_choice_sample=0
 ui_choice_mod=0
-city_widths={}
-star_positions={}
-defaults_set=false
 debounce_params_save=0
 debounce_set_max_beats=0
 sprite_positions={}
+sprite_view_order={}
+param_id_to_index={}
 
 -- WAVEFORMS
 waveform_samples={{}}
 current_positions={1,1,1,1,1,1}
 -- drawing
+star_positions={}
 bar_position=20
 waveform_height=26
 bar_height=5
@@ -96,6 +96,8 @@ function init()
   end
   -- update sprite positions
   update_sprite_positions()
+
+  params:set("file_fr1","/home/we/dust/audio/tehn/mancini1.wav")
 end
 
 function update_sprite_positions()
@@ -104,7 +106,7 @@ function update_sprite_positions()
     table.insert(sprite_positions,{"sc"..i,params:get("sprite_pos_sc"..i)})
   end
   for i=1,8 do 
-    if not string.find(params:get("file_fr"..i),"silence.wav") then 
+    if not string.find(params:get("file_fr"..i),"silence.wav") and string.find(params:get("file_fr"..i),".wav") then 
       table.insert(sprite_positions,{"fr"..i,params:get("sprite_pos_fr"..i)})
     end
   end
@@ -112,6 +114,19 @@ function update_sprite_positions()
     table.insert(sprite_positions,{"loop"..i,100+7*i})
   end
   table.sort(sprite_positions,compare_second)
+  sprite_view_order = {}
+  for i,m in ipairs(modulators) do 
+    table.insert(sprite_view_order,{"sc"..i,params:get("sprite_zorder_sc"..i)})
+  end
+  for i=1,8 do 
+    if not string.find(params:get("file_fr"..i),"silence.wav") and string.find(params:get("file_fr"..i),".wav") then 
+      table.insert(sprite_view_order,{"fr"..i,params:get("sprite_zorder_fr"..i)})
+    end
+  end
+  for i=1,3 do 
+    table.insert(sprite_view_order,{"loop"..i,params:get("sprite_zorder_loop"..i)})
+  end
+  table.sort(sprite_view_order,compare_second)
 end
 
 function compare_second(a,b)
@@ -126,9 +141,10 @@ function setup_parameters()
   }
 
   -- add supercollider params + sprites
+  params:add_separator("supercollider")
   for i,m in ipairs(modulators) do
-    params:add_group(m.name,11)
-    params:add{type="control",id="engine_sc"..i,name=m.name,controlspec=controlspec.new(m.min,m.max,"lin",m.interval,m.default,""),
+    params:add_group(m.name,4)
+    params:add{type="control",id="sc"..i,name=m.name,controlspec=controlspec.new(m.min,m.max,"lin",m.interval,m.default,""),
       action=function(value)
         local enginecmd="engine."..m.name.."("..value..")"
         local f=load(enginecmd)
@@ -136,7 +152,11 @@ function setup_parameters()
         debounce_params_save=3
       end
     }
-    params:add{type="option",id="natural_sc"..i,name="natural",options={"no","yes"},default=1,
+    isnatural = 1 
+    if m.natural ~= nil and m.natural then 
+      isnatural = 2
+    end
+    params:add{type="option",id="natural_sc"..i,name="natural",options={"no","yes"},default=isnatural,
       action=function(value)
         debounce_params_save=3
       end
@@ -152,67 +172,109 @@ function setup_parameters()
       end
     }
     -- parameters for drawing
-    params:add_number("sprite_zorder_sc"..i,0,100,math.random(1,15))
+    params:add_text("sprite_name_sc"..i)
+    params:set("sprite_name_sc"..i,m.name)
+    params:hide("sprite_name_sc"..i)
+    params:add_number("sprite_zorder_sc"..i)
+    params:set("sprite_zorder_sc"..i,math.random(1,15))
     params:hide("sprite_zorder_sc"..i)
-    params:add_number("sprite_width_sc"..i,0,100,util.clamp(gaussian(12,6),3,30))
+    params:add_number("sprite_width_sc"..i)
+    params:set("sprite_width_sc"..i,util.clamp(gaussian(9,6),3,22))
     params:hide("sprite_width_sc"..i)
-    params:add_number("sprite_density_sc"..i,0,100,math.random(20,90)/100.0)
+    params:add_number("sprite_density_sc"..i)
+    params:set("sprite_density_sc"..i,math.random(20,90)/100.0)
     params:hide("sprite_density_sc"..i)
-    params:add_number("sprite_xspacing_sc"..i,0,100,math.random(2,4))
+    params:add_number("sprite_xspacing_sc"..i)
+    params:set("sprite_xspacing_sc"..i,math.random(2,4))
     params:hide("sprite_xspacing_sc"..i)
-    params:add_number("sprite_xspacing2_sc"..i,0,100,math.random(1,2))
+    params:add_number("sprite_xspacing2_sc"..i)
+    params:set("sprite_xspacing2_sc"..i,math.random(1,2))
     params:hide("sprite_xspacing2_sc"..i)
-    params:add_number("sprite_yspacing_sc"..i,0,100,math.random(2,4))
+    params:add_number("sprite_yspacing_sc"..i)
+    params:set("sprite_yspacing_sc"..i,math.random(2,4))
     params:hide("sprite_yspacing_sc"..i)
-    params:add_number("sprite_num_sc"..i,0,100,math.random(1,15))
+    params:add_number("sprite_num_sc"..i)
+    params:set("sprite_num_sc"..i,math.random(1,15))
     params:hide("sprite_num_sc"..i)
-    params:add_number("sprite_pos_sc"..i,0,128,math.floor(i*100/#modulators))
+    params:add_number("sprite_pos_sc"..i)
+    params:set("sprite_pos_sc"..i,math.floor(i*80/#modulators+4+math.random(-1,1)))
     params:hide("sprite_pos_sc"..i)
   end
   
 
   -- add field recording params + sprites
+  params:add_separator("field recordings")
   for i=1,8 do 
-    params:add_group("field recording "..i)
-    params:add_file("file_fr"..i,"file",_path.audio)
-    params:set_action("file_fr"..i,funtion(value)
-        local enginecmd="engine.sample"..i.."("..value..")"
-        local f=load(enginecmd)
-        f()
-        update_sprite_positions() -- adding a new sprite in this case
-        debounce_params_save=3
+    params:add_group("field recording "..i,5)
+    params:add_file("file_fr"..i,"file","/home/we/dust/audio/")
+    params:set_action("file_fr"..i,function(value)
+        if string.find(value,".wav") then 
+          local enginecmd="engine.sample"..i.."file('"..value.."')"
+          print(enginecmd)
+          local f=load(enginecmd)
+          f()
+          update_sprite_positions() -- adding a new sprite in this case
+          debounce_params_save=3
+        end
     end)
-    params:add{type="control",id="amp_fr"..i,name="amp",controlspec=controlspec.new(0,1,"lin",0.01,0,""),
+    params:add{type="control",id="fr"..i,name="amp",controlspec=controlspec.new(0,1,"lin",0.01,0,""),
       action=function(value)
-        local enginecmd="engine.sample"..i.."amp("..value..")"
+        local enginecmd="engine.sample"..i.."("..value..")"
         local f=load(enginecmd)
         f()
         debounce_params_save=3
       end
     }
+    params:add{type="option",id="natural_fr"..i,name="natural",options={"no","yes"},default=2,
+      action=function(value)
+        debounce_params_save=3
+      end
+    }
+    params:add{type="option",id="loves_fr"..i,name="loves gojira",options={"no","yes"},default=2,
+      action=function(value)
+        debounce_params_save=3
+      end
+    }
+    params:add{type="option",id="fears_fr"..i,name="fears gojira",options={"no","yes"},default=1,
+      action=function(value)
+        debounce_params_save=3
+      end
+    }
     -- parameters for drawing
-    params:add_number("sprite_zorder_fr"..i,0,100,math.random(1,15))
+    params:add_text("sprite_name_fr"..i)
+    params:set("sprite_name_fr"..i,"field"..i)
+    params:hide("sprite_name_fr"..i)
+    params:add_number("sprite_zorder_fr"..i)
+    params:set("sprite_zorder_fr"..i,math.random(1,15))
     params:hide("sprite_zorder_fr"..i)
-    params:add_number("sprite_width_fr"..i,0,100,util.clamp(gaussian(12,6),3,30))
+    params:add_number("sprite_width_fr"..i)
+    params:set("sprite_width_fr"..i,util.clamp(gaussian(12,6),3,30))
     params:hide("sprite_width_fr"..i)
-    params:add_number("sprite_density_fr"..i,0,100,math.random(20,90)/100.0)
+    params:add_number("sprite_density_fr"..i)
+    params:set("sprite_density_fr"..i,math.random(20,90)/100.0)
     params:hide("sprite_density_fr"..i)
-    params:add_number("sprite_xspacing_fr"..i,0,100,math.random(2,4))
+    params:add_number("sprite_xspacing_fr"..i)
+    params:set("sprite_xspacing_fr"..i,math.random(2,4))
     params:hide("sprite_xspacing_fr"..i)
-    params:add_number("sprite_xspacing2_fr"..i,0,100,math.random(1,2))
+    params:add_number("sprite_xspacing2_fr"..i)
+    params:set("sprite_xspacing2_fr"..i,math.random(1,2))
     params:hide("sprite_xspacing2_fr"..i)
-    params:add_number("sprite_yspacing_fr"..i,0,100,math.random(2,4))
+    params:add_number("sprite_yspacing_fr"..i)
+    params:set("sprite_yspacing_fr"..i,math.random(2,4))
     params:hide("sprite_yspacing_fr"..i)
-    params:add_number("sprite_num_fr"..i,0,100,math.random(1,15))
+    params:add_number("sprite_num_fr"..i)
+    params:set("sprite_num_fr"..i,math.random(1,15))
     params:hide("sprite_num_fr"..i)
-    params:add_number("sprite_pos_fr"..i,0,128,math.floor(i*100/8))
+    params:add_number("sprite_pos_fr"..i)
+    params:set("sprite_pos_fr"..i,math.floor((i-1)*9+9))
     params:hide("sprite_pos_fr"..i)
   end
 
   -- parameters for softcut loops
+  params:add_separator("softcut loops")
   for i=1,3 do
-    params:add_separator("loop "..i,7)
-    params:add {type="control",id="loop"..i,name="level",controlspec=controlspec.new(0,0.5,'lin',0.01,0.5,''),
+    params:add_group("loop "..i,9)
+    params:add {type="control",id="loop"..i,name="level",controlspec=controlspec.new(0,0.5,'lin',0.01,0.5-(i/6),''),
       action=function(value)
         softcut.level(i*2,value)
         softcut.level(i*2-1,value)
@@ -263,33 +325,55 @@ function setup_parameters()
         debounce_params_save=3
       end
     }
-    params:add{type="option",id="loves_lp"..i,name="loves gojira",options={"no","yes"},default=1,
+    params:add{type="option",id="natural_loop"..i,name="natural",options={"no","yes"},default=1,
       action=function(value)
         debounce_params_save=3
       end
     }
-    params:add{type="option",id="fears_lp"..i,name="fears gojira",options={"no","yes"},default=2,
+    params:add{type="option",id="loves_loop"..i,name="loves gojira",options={"no","yes"},default=1,
+      action=function(value)
+        debounce_params_save=3
+      end
+    }
+    params:add{type="option",id="fears_loop"..i,name="fears gojira",options={"no","yes"},default=2,
       action=function(value)
         debounce_params_save=3
       end
     }
     -- parameters for drawing
-    params:add_number("sprite_zorder_lp"..i,0,100,math.random(1,15))
-    params:hide("sprite_zorder_lp"..i)
-    params:add_number("sprite_width_lp"..i,0,100,util.clamp(gaussian(12,6),3,30))
-    params:hide("sprite_width_lp"..i)
-    params:add_number("sprite_density_lp"..i,0,100,math.random(20,90)/100.0)
-    params:hide("sprite_density_lp"..i)
-    params:add_number("sprite_xspacing_lp"..i,0,100,math.random(2,4))
-    params:hide("sprite_xspacing_lp"..i)
-    params:add_number("sprite_xspacing2_lp"..i,0,100,math.random(1,2))
-    params:hide("sprite_xspacing2_lp"..i)
-    params:add_number("sprite_yspacing_lp"..i,0,100,math.random(2,4))
-    params:hide("sprite_yspacing_lp"..i)
-    params:add_number("sprite_num_lp"..i,0,100,math.random(1,15))
-    params:hide("sprite_num_lp"..i)
-    params:add_number("sprite_pos_lp"..i,0,128,math.floor(100+i*6))
-    params:hide("sprite_pos_lp"..i)
+    params:add_text("sprite_name_loop"..i)
+    params:set("sprite_name_loop"..i,"loop"..i)
+    params:hide("sprite_name_loop"..i)
+    params:add_number("sprite_zorder_loop"..i)
+    params:set("sprite_zorder_loop"..i,math.random(1,15))
+    params:hide("sprite_zorder_loop"..i)
+    params:add_number("sprite_width_loop"..i)
+    params:set("sprite_width_loop"..i,util.clamp(gaussian(12,6),3,30))
+    params:hide("sprite_width_loop"..i)
+    params:add_number("sprite_density_loop"..i)
+    params:set("sprite_density_loop"..i,math.random(20,90)/100.0)
+    params:hide("sprite_density_loop"..i)
+    params:add_number("sprite_xspacing_loop"..i)
+    params:set("sprite_xspacing_loop"..i,math.random(2,4))
+    params:hide("sprite_xspacing_loop"..i)
+    params:add_number("sprite_xspacing2_loop"..i)
+    params:set("sprite_xspacing2_loop"..i,math.random(1,2))
+    params:hide("sprite_xspacing2_loop"..i)
+    params:add_number("sprite_yspacing_loop"..i)
+    params:set("sprite_yspacing_loop"..i,math.random(2,4))
+    params:hide("sprite_yspacing_loop"..i)
+    params:add_number("sprite_num_loop"..i)
+    params:set("sprite_num_loop"..i,math.random(1,15))
+    params:hide("sprite_num_loop"..i)
+    params:add_number("sprite_pos_loop"..i)
+    params:set("sprite_pos_loop"..i,math.floor(80+i*7))
+    params:hide("sprite_pos_loop"..i)
+  end
+
+  for i,p in ipairs(params.params) do 
+    if p.id ~= nil then 
+      param_id_to_index[p.id]=i
+    end
   end
 end
 
@@ -381,25 +465,31 @@ function reset_softcut()
 end
 
 function enc(k,d)
-  -- if k==2 then
-  --   ui_choice_mod=sign_cycle(ui_choice_mod,d,0,#modulators)
-  -- elseif k==3 and ui_choice_mod>0 then
-  --   m=modulators[ui_choice_mod]
-  --   if m.interval==1 then
-  --     d=sign(d)
-  --   end
-  --   params:set(m.para,util.clamp(params:get(m.para)+d*m.interval,m.min,m.max))
-  -- elseif k==1 then
-  --   ui_enc3_on=clock.get_beats()
-  --   for i,m in ipairs(modulators) do
-  --     if params:get(m.name)>0 then
-  --       if m.interval==1 then
-  --         d=sign(d)
-  --       end
-  --       params:set(m.para,util.clamp(params:get(m.para)+d*m.interval,m.min,m.max))
-  --     end
-  --   end
-  -- end
+  if k==2 then
+    ui_choice_mod=sign_cycle(ui_choice_mod,d,0,#sprite_positions)
+  elseif k==3 and ui_choice_mod>0 then
+    id = sprite_positions[ui_choice_mod][1]
+    index = param_id_to_index[id]
+    interval = params.params[index].controlspec.step
+    if interval == 0 then 
+      interval = 0.01
+    end
+    if interval==1 then
+      d=sign(d)
+    end
+    params:set(id,params:get(id)+d*interval)
+  elseif k==1 then
+    -- TODO do godzilla
+    -- ui_enc3_on=clock.get_beats()
+    -- for i,m in ipairs(modulators) do
+    --   if params:get(m.name)>0 then
+    --     if m.interval==1 then
+    --       d=sign(d)
+    --     end
+    --     params:set(m.para,util.clamp(params:get(m.para)+d*m.interval,m.min,m.max))
+    --   end
+    -- end
+  end
 end
 
 function key(k,z)
@@ -416,100 +506,152 @@ function redraw()
   
   -- draw engine skyline
   draw_stars()
-  -- draw_moon()
-  -- for order,i in ipairs(modulator_ordering) do
-  --   if modulators[i].nature==true then
-  --     draw_tree(i,order)
-  --   else
-  --     draw_building(i,order)
-  --   end
-  -- end
-  -- draw_godzilla()
+  draw_moon()
+  for i,sp in ipairs(sprite_view_order) do 
+    draw_sprite(sp[1],false)
+  end
+  draw_godzilla()
   
-  -- -- show samples
-  -- screen.level(15)
-  -- local positions={}
-  -- for i,p in ipairs(current_positions) do
-  --   local frac=math.ceil(i/2-1)/3
-  --   positions[i]=util.round(util.linlin(softcut_loop_starts[i],softcut_loop_ends[i],math.ceil(i/2-1)/3*128,math.ceil(i/2)/3*128,p))
-  -- end
-  -- if waveform_samples[1]~=nil and waveform_samples[2]~=nil then
-  --   for j=1,2 do
-  --     for i,s in ipairs(waveform_samples[j]) do
-  --       if i==1 or i==1+42 or i==1+42+42 or i>=127 then
-  --         goto continue
-  --       end
-  --       local highlight=false
-  --       if i==positions[1] or i==positions[2] or i==positions[3] or i==positions[4] or i==positions[5] or i==positions[6] then
-  --         highlight=true
-  --       end
-  --       for k=1,3 do
-  --         if params:get(k.."rec")==1 and i>42*(k-1) and i<=42*k then
-  --           highlight=not highlight
-  --           break
-  --         end
-  --       end
-  --       if highlight then
-  --         screen.level(15)
-  --       else
-  --         screen.level(1)
-  --       end
-  --       local height=util.clamp(0,waveform_height,util.round(math.abs(s)*waveform_height))
-  --       screen.move(i,58-waveform_height/2)
-  --       screen.line_rel(0,(j*2-3)*height)
-  --       screen.stroke()
-  --       ::continue::
-  --     end
-  --   end
-  -- end
+  -- show samples
+  screen.level(15)
+  local positions={}
+  for i,p in ipairs(current_positions) do
+    local frac=math.ceil(i/2-1)/3
+    positions[i]=util.round(util.linlin(softcut_loop_starts[i],softcut_loop_ends[i],math.ceil(i/2-1)/3*128,math.ceil(i/2)/3*128,p))
+  end
+  if waveform_samples[1]~=nil and waveform_samples[2]~=nil then
+    for j=1,2 do
+      for i,s in ipairs(waveform_samples[j]) do
+        if i==1 or i==1+42 or i==1+42+42 or i>=127 then
+          goto continue
+        end
+        local highlight=false
+        if i==positions[1] or i==positions[2] or i==positions[3] or i==positions[4] or i==positions[5] or i==positions[6] then
+          highlight=true
+        end
+        for k=1,3 do
+          if params:get(k.."rec")==1 and i>42*(k-1) and i<=42*k then
+            highlight=not highlight
+            break
+          end
+        end
+        if highlight then
+          screen.level(15)
+        else
+          screen.level(1)
+        end
+        local height=util.clamp(0,waveform_height,util.round(math.abs(s)*waveform_height))
+        screen.move(i,58-waveform_height/2)
+        screen.line_rel(0,(j*2-3)*height)
+        screen.stroke()
+        ::continue::
+      end
+    end
+  end
   
-  -- -- draw rect around current sample
-  -- if ui_choice_sample>0 then
-  --   if params:get(ui_choice_sample.."rec")==1 then
-  --     screen.level(15)
-  --   else
-  --     screen.level(1)
-  --   end
-  --   screen.rect(1+42*(ui_choice_sample-1),bar_position+bar_height+1,43,64-bar_position-bar_height-1)
-  --   screen.stroke()
-  -- end
+  -- draw rect around current sample
+  if ui_choice_sample>0 then
+    if params:get(ui_choice_sample.."rec")==1 then
+      screen.level(15)
+    else
+      screen.level(1)
+    end
+    screen.rect(1+42*(ui_choice_sample-1),bar_position+bar_height+1,43,64-bar_position-bar_height-1)
+    screen.stroke()
+  end
   
-  -- -- draw middle bar
-  -- screen.level(15)
-  -- screen.rect(0,bar_position-1,128,bar_height+2)
-  -- screen.fill()
-  -- screen.level(0)
+  -- draw middle bar
+  screen.level(15)
+  screen.rect(0,bar_position-1,128,bar_height+2)
+  screen.fill()
+  screen.level(0)
   
-  -- -- label which modulator is selected
-  -- if ui_choice_mod>0 then
-  --   x=math.floor((ui_choice_mod-1)/(#modulators)*128)+2
-  --   y=bar_position+bar_height
-  --   -- w = math.floor(128/#modulators)+2
-  --   -- if ui_choice_mod==#modulators then
-  --   --   w = w -3
-  --   -- end
-  --   -- w = city_widths[ui_choice_mod]*w
-  --   w=city_widths[ui_choice_mod]
-  --   screen.level(0)
-  --   if ui_choice_mod>=#modulators-1 then
-  --     x=math.floor((ui_choice_mod)/(#modulators)*128)-2
-  --     screen.move(x,y)
-  --     screen.text_right(modulators[ui_choice_mod].name)
-  --   elseif ui_choice_mod<=2 then
-  --     screen.move(x,y)
-  --     screen.text(modulators[ui_choice_mod].name)
-  --   else
-  --     screen.move(x+w/3,y)
-  --     screen.text_center(modulators[ui_choice_mod].name)
-  --   end
-  -- end
-  -- draw_boom()
+  -- label which thing is selected
+  if ui_choice_mod>0 then
+    id=sprite_positions[ui_choice_mod][1]
+    x = params:get("sprite_pos_"..id)
+    y=bar_position+bar_height
+    w=params:get("sprite_width_"..id)
+    if params:get("natural_"..id)==2 then 
+      w = 18
+    end
+    screen.level(0)
+    -- if ui_choice_mod>=#sprite_positions-1 then
+    --   screen.move(x+w,y)
+    --   screen.text_right(params:get("sprite_name_"..id))
+    -- if ui_choice_mod<=2 then
+    --   screen.move(x,y)
+    --   screen.text(params:get("sprite_name_"..id))
+    -- else
+    --   screen.move(x+w/2,y)
+    --   screen.text_center(params:get("sprite_name_"..id))
+    -- end
+    screen.move(x+w/2,y)
+    screen.text_center(params:get("sprite_name_"..id))
+  end
+  draw_boom()
   screen.update()
 end
 
 --
 -- drawings
 --
+
+function draw_sprite(id,highlight)
+  v = params:get(id)
+  if v == 0 then 
+    do return end 
+  end
+  index = param_id_to_index[id]
+  x = params:get("sprite_pos_"..id)
+  v = (v-params.params[index].controlspec.minval) / (params.params[index].controlspec.maxval-params.params[index].controlspec.minval)
+  if params:get("natural_"..id) == 2 then 
+    -- draw tree 
+    draw_tree(x,v,params:get("sprite_num_"..id),params:get("sprite_zorder_"..id),highlight)
+  else
+    -- draw building 
+    draw_building(x,v,params:get("sprite_width_"..id),params:get("sprite_zorder_"..id),params:get("sprite_xspacing_"..id),params:get("sprite_xspacing2_"..id),params:get("sprite_yspacing_"..id),params:get("sprite_density_"..id),highlight)
+  end
+end
+
+function draw_building(x,v,w,zorder,xspacing,xspacing2,yspacing,density)
+  y=bar_position
+  h=bar_position-1
+  screen.level(0)
+  screen.rect(x,y-v*h,w,v*h)
+  screen.fill()
+  if highlight then
+    screen.level(15)
+  else
+    screen.level(zorder)
+  end
+  screen.rect(x,y-v*h,w,v*h)
+  screen.stroke()
+  
+  x=math.floor(x)
+  w=math.floor(w)
+  y=math.floor(y-v*h)
+  vh=math.floor(v*h)
+  xpos=x+xspacing-xspacing2
+  ypos=y+yspacing
+  math.randomseed(x)
+  while ypos<y+vh do
+    if xpos>=x+w then
+      ypos=ypos+yspacing
+      xpos=x+xspacing-xspacing2
+    else
+      if math.random()<density then
+        if xpos==x+w-1 then
+          screen.pixel(xpos-1,ypos)
+        else
+          screen.pixel(xpos,ypos)
+        end
+        screen.fill()
+      end
+      xpos=xpos+xspacing
+    end
+  end
+end
 
 function draw_stars()
   for i,p in ipairs(star_positions) do
@@ -524,17 +666,9 @@ function draw_stars()
 end
 
 
-function draw_tree(i,order)
-  m=modulators[i]
-  v=params:get(m.name)/(m.max-m.min)
-  if v==0 then
-    do return end
-  end
+function draw_tree(x,v,tree_num,zorder)
   height=(1-v)*18
-  x=(i-1)*math.floor(128/(#modulators))+1
-  math.randomseed(x)
-  local tree_num=math.random(1,#tree_pixels)
-  screen.level(math.ceil(10*order/#modulators))
+  screen.level(zorder)
   for _,p in ipairs(tree_pixels[tree_num].dark) do
     if p[2]+height>height and p[2]+height<19 then
       screen.pixel(p[1]+x,p[2]+height)
@@ -568,59 +702,6 @@ function draw_boom()
   screen.fill()
 end
 
-function draw_building(i,order)
-  m=modulators[i]
-  v=(params:get(m.name)-m.min)/(m.max-m.min)
-  if v==0 then
-    do return end
-  end
-  x=(i-1)*math.floor(128/(#modulators))+1
-  y=bar_position
-  
-  w=city_widths[i]
-  h=bar_position-1
-  name=""
-  highlight=i==ui_choice_mod
-  name=m.name
-  screen.level(0)
-  screen.rect(x,y-v*h,w,v*h)
-  screen.fill()
-  if highlight then
-    screen.level(15)
-  else
-    screen.level(math.ceil(10*order/#modulators))
-  end
-  screen.rect(x,y-v*h,w,v*h)
-  screen.stroke()
-  
-  x=math.floor(x)
-  w=math.floor(w)
-  y=math.floor(y-v*h)
-  vh=math.floor(v*h)
-  math.randomseed(i)
-  xspacing=math.random(2,4)
-  yspacing=math.random(2,4)
-  xspacing2=math.random(1,2)
-  density=math.random(20,90)/100.0
-  xpos=x+xspacing-xspacing2
-  ypos=y+yspacing
-  while ypos<y+vh do
-    if xpos>=x+w then
-      ypos=ypos+yspacing
-      xpos=x+xspacing-xspacing2
-    else
-      if math.random()<density then
-        if xpos==x+w-1 then
-          screen.pixel(xpos-1,ypos)
-        else
-          screen.pixel(xpos,ypos)
-        end
-        screen.fill()
-      end
-      xpos=xpos+xspacing
-    end
-  end
-end
 
 function draw_moon()
   local pixels={

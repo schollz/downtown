@@ -265,7 +265,7 @@ Engine_Downtown : CroneEngine {
 			synthPower.set(\amp, msg[1]);
 		});
 
-		this.addCommand("power", "f", { arg msg;
+		this.addCommand("powerline", "f", { arg msg;
 			synthPower.set(\amp, msg[1]);
 		});		
 
